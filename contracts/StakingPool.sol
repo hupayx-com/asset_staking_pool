@@ -56,7 +56,7 @@ contract StakingPool {
     uint256 amountStaked; // staking 수량
     uint256 stakeTimestamp; // staking 시점
     uint256 receivedRewardToken; // 받은 보상
-    uint256 firstPendingRewardScheduleIndex; // 보상 스케줄 목록에서 받을 보상의 첫번째 index
+    uint256 nextPendingRewardScheduleIndex; // 보상 스케줄 목록에서 받을 보상의 첫번째 index
     uint256 scaledTokenPrice; // staking 시점의 토큰 가격
     uint256 dailyInterest; // 일 이자
   }
@@ -135,7 +135,7 @@ contract StakingPool {
         amountStaked: _amount,
         stakeTimestamp: block.timestamp,
         receivedRewardToken: 0,
-        firstPendingRewardScheduleIndex: 0,
+        nextPendingRewardScheduleIndex: 0,
         scaledTokenPrice: currentScaledTokenPrice,
         dailyInterest: dailyInterest
       })
@@ -151,14 +151,14 @@ contract StakingPool {
 
     StakingRecord storage userStake = stakingRecords[_user][_stakeIndex];
     uint256 reward = 0;
-    uint256 currentIndex = 0;
+    uint256 nextIndex = 0;
 
     for (
-      uint256 i = userStake.firstPendingRewardScheduleIndex;
+      uint256 i = userStake.nextPendingRewardScheduleIndex;
       i < RewardSchedules.length;
       i++
     ) {
-      currentIndex = i;
+      nextIndex = i;
 
       RewardSchedule memory schedule = RewardSchedules[i];
 
@@ -187,7 +187,7 @@ contract StakingPool {
       }
     }
 
-    return (reward, currentIndex);
+    return (reward, nextIndex);
   }
 
   // 보상 요청
@@ -207,7 +207,7 @@ contract StakingPool {
 
     StakingRecord storage userStake = stakingRecords[msg.sender][_stakeIndex];
     userStake.receivedRewardToken += reward;
-    userStake.firstPendingRewardScheduleIndex = nextIndex;
+    userStake.nextPendingRewardScheduleIndex = ++nextIndex;
 
     IERC20(details.stakingToken).transfer(msg.sender, reward);
   }

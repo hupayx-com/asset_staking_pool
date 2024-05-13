@@ -71,7 +71,7 @@ describe("Staking", function () {
       ethers.parseEther(STAKING_AMOUNT_ETHER)
     );
     expect(stakeRecord.receivedRewardToken).to.equal(0);
-    expect(stakeRecord.firstPendingRewardScheduleIndex).to.equal(0);
+    expect(stakeRecord.nextPendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord.scaledTokenPrice).to.equal(1000000);
     expect(stakeRecord.dailyInterest).to.equal(ethers.parseEther("1"));
   });
