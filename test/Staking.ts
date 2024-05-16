@@ -45,7 +45,7 @@ describe("Staking", function () {
     });
   });
 
-  it("사용자가 토큰을 스테이킹 한다.", async function () {
+  it("토큰을 스테이킹 한다.", async function () {
     const { stakingPool, suffle, staker_1, owner } =
       await deployStakingPoolFixture();
 
