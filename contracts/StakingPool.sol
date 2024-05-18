@@ -85,6 +85,14 @@ contract StakingPool {
   // 이벤트 정의
   event Staked(address indexed user, uint256 amount);
   event RewardClaimed(address indexed user, uint256 reward);
+  event Unstaked(address indexed user, uint256 amount);
+  event RewardScheduleAdded(
+    uint256 scaledTokenPriceAtPayout,
+    uint256 startDate,
+    uint256 endDate
+  );
+  event ScaledTokenPriceUpdated(uint256 newPrice);
+  event PrincipalWithdrawn(address indexed user, uint256 totalAmount);
 
   event FundraisingStarted(address indexed self);
   event OperatingStarted(address indexed self);
@@ -162,6 +170,7 @@ contract StakingPool {
   // 실시간 Token 가격을 외부에서 주기적으로 업데이트 한다.
   function updateScaledTokenPrice(uint256 _price) external onlyAdmin {
     currentScaledTokenPrice = _price;
+    emit ScaledTokenPriceUpdated(_price);
   }
 
   // 보상 스케줄을 추가한다.
@@ -185,6 +194,8 @@ contract StakingPool {
         endDate: _endDate
       })
     );
+
+    emit RewardScheduleAdded(_scaledTokenPriceAtPayout, _startDate, _endDate);
   }
 
   ///////////////////////////
@@ -361,6 +372,8 @@ contract StakingPool {
     }
 
     IERC20(details.stakingToken).transfer(msg.sender, _amount);
+
+    emit Unstaked(msg.sender, _amount);
   }
 
   // 보상 요청 (운영/운영종료/운영중지 인 경우)
@@ -420,6 +433,8 @@ contract StakingPool {
     }
 
     IERC20(details.stakingToken).transfer(msg.sender, totalAmount);
+
+    emit PrincipalWithdrawn(msg.sender, totalAmount);
   }
 
   //////////////
