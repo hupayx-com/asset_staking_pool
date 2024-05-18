@@ -35,7 +35,8 @@ contract StakingPool {
     Operating, // 운영 (-> 종료/중지)
     Closed, // 종료
     Locked, // 잠김 (-> 운영)
-    Stopped, // 중지
+    FundraisingStopped, // 모금 중지
+    OperatingStopped, // 운영 중지
     Failed // 실패
   }
   State public state;
@@ -83,7 +84,8 @@ contract StakingPool {
   event OperatingStarted(address indexed self);
   event PoolClosed(address indexed self);
   event PoolLocked(address indexed self);
-  event PoolStopped(address indexed self);
+  event PoolFundraisingStopped(address indexed self);
+  event PoolOperatingStopped(address indexed self);
   event PoolFailed(address indexed self);
 
   constructor() {
@@ -96,9 +98,9 @@ contract StakingPool {
     _;
   }
 
-  ///////////////////////
-  // Pool 관련 설정 함수들 //
-  ///////////////////////
+  ////////////////////////////////
+  // Pool 관련 설정 함수들 by Admin //
+  ////////////////////////////////
 
   // Pool 이름 설정
   function setPoolName(string memory _name) public onlyAdmin {
@@ -172,9 +174,9 @@ contract StakingPool {
     );
   }
 
-  //////////////////
-  // 상태 변경 함수들 //
-  //////////////////
+  ///////////////////////////
+  // 상태 변경 함수들 by Admin //
+  ///////////////////////////
 
   // 모금 시작
   function startFundraising() public onlyAdmin {
@@ -220,15 +222,26 @@ contract StakingPool {
     emit PoolLocked(address(this));
   }
 
-  // 중지
-  function stopPool() public onlyAdmin {
+  // 모금 중지
+  function stopPoolFundrasing() public onlyAdmin {
     require(
-      state == State.Fundraising || state == State.Operating,
-      "Pool must be in Fundraising or Operating state to be stopped"
+      state == State.Fundraising,
+      "Pool must be in Fundraising or Operating state to be FundraisingStopped"
     );
 
-    state = State.Stopped;
-    emit PoolStopped(address(this));
+    state = State.FundraisingStopped;
+    emit PoolFundraisingStopped(address(this));
+  }
+
+  // 운영 중지
+  function stopPoolOperating() public onlyAdmin {
+    require(
+      state == State.Operating,
+      "Pool must be in Fundraising or Operating state to be OperatingStopped"
+    );
+
+    state = State.OperatingStopped;
+    emit PoolOperatingStopped(address(this));
   }
 
   // 실패
@@ -243,7 +256,7 @@ contract StakingPool {
   }
 
   //////////////
-  // 사용자 기능 //
+  // 사용자 요청 //
   //////////////
 
   // 스테이킹
@@ -317,6 +330,54 @@ contract StakingPool {
     IERC20(details.stakingToken).transfer(msg.sender, _amount);
   }
 
+  // 보상 요청
+  function claimRewardToken(uint256 _stakeIndex) public {
+    require(
+      state == State.Operating ||
+        state == State.Closed ||
+        state == State.FundraisingStopped
+    );
+
+    require(
+      _stakeIndex < stakingRecords[msg.sender].length,
+      "Invalid stake index"
+    );
+
+    (uint256 reward, uint256 nextIndex) = getPendingRewardToken(
+      msg.sender,
+      _stakeIndex
+    );
+    require(reward > 0, "No reward available");
+
+    StakingRecord storage userStake = stakingRecords[msg.sender][_stakeIndex];
+    userStake.receivedRewardToken += reward;
+    userStake.pendingRewardScheduleIndex = nextIndex;
+
+    IERC20(details.stakingToken).transfer(msg.sender, reward);
+
+    emit RewardClaimed(msg.sender, reward);
+  }
+
+  // 모금 실패/중지/종료 시 자금 회수
+  function withdrawFailedFundraising() public {
+    require(state == State.Fundraising);
+
+    // 모금 실패 시 자금 회수 로직
+    StakingRecord[] storage records = stakingRecords[msg.sender];
+    uint256 totalAmount = 0;
+
+    for (uint256 i = 0; i < records.length; i++) {
+      totalAmount += records[i].amountStaked;
+      records[i].amountStaked = 0;
+    }
+
+    IERC20(details.stakingToken).transfer(msg.sender, totalAmount);
+  }
+
+  //////////////
+  // 사용자 조회 //
+  //////////////
+
   // 보상 확인
   function getPendingRewardToken(
     address _user,
@@ -373,46 +434,6 @@ contract StakingPool {
     return (reward, nextIndex);
   }
 
-  // 보상 요청
-  function claimRewardToken(uint256 _stakeIndex) public {
-    require(state != State.Waiting && state != State.Fundraising);
-
-    require(
-      _stakeIndex < stakingRecords[msg.sender].length,
-      "Invalid stake index"
-    );
-
-    (uint256 reward, uint256 nextIndex) = getPendingRewardToken(
-      msg.sender,
-      _stakeIndex
-    );
-    require(reward > 0, "No reward available");
-
-    StakingRecord storage userStake = stakingRecords[msg.sender][_stakeIndex];
-    userStake.receivedRewardToken += reward;
-    userStake.pendingRewardScheduleIndex = nextIndex;
-
-    IERC20(details.stakingToken).transfer(msg.sender, reward);
-
-    emit RewardClaimed(msg.sender, reward);
-  }
-
-  // 모금 실패 시 자금 회수
-  function withdrawFailedFundraising() public {
-    require(state == State.Fundraising);
-
-    // 모금 실패 시 자금 회수 로직
-    StakingRecord[] storage records = stakingRecords[msg.sender];
-    uint256 totalAmount = 0;
-
-    for (uint256 i = 0; i < records.length; i++) {
-      totalAmount += records[i].amountStaked;
-      records[i].amountStaked = 0;
-    }
-
-    IERC20(details.stakingToken).transfer(msg.sender, totalAmount);
-  }
-
   // 사용자의 전체 보상 조회
   function getPendingRewardTokens(
     address _staker
@@ -458,22 +479,6 @@ contract StakingPool {
     for (uint256 i = 0; i < records.length; i++) {
       claimRewardToken(i);
     }
-  }
-
-  // 운영 종료 시 자금 회수
-  function withdrawAtClosure() public {
-    require(state == State.Operating);
-
-    // 운영 종료 시 자금 회수 로직
-    StakingRecord[] storage records = stakingRecords[msg.sender];
-    uint256 totalAmount = 0;
-
-    for (uint256 i = 0; i < records.length; i++) {
-      totalAmount += records[i].amountStaked;
-      records[i].amountStaked = 0;
-    }
-
-    IERC20(details.stakingToken).transfer(msg.sender, totalAmount);
   }
 
   // function to get length of the staking records array

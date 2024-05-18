@@ -72,8 +72,8 @@ describe("Status", function () {
     await expect(stakingPool.lockPool()).to.be.revertedWith(
       "Pool must be in Fundraising state to be locked"
     );
-    await expect(stakingPool.stopPool()).to.be.revertedWith(
-      "Pool must be in Fundraising or Operating state to be stopped"
+    await expect(stakingPool.stopPoolFundrasing()).to.be.revertedWith(
+      "Pool must be in Fundraising or Operating state to be FundraisingStopped"
     );
     await expect(stakingPool.failPool()).to.be.revertedWith(
       "Pool must be in Fundraising state to be marked as failed"
@@ -85,7 +85,7 @@ describe("Status", function () {
     expect(status).to.equal(PoolState.Fundraising);
   });
 
-  it("Pool 상태가 모금 인 경우에 운영/잠김/중지/실패 로만 변경된다.", async function () {
+  it("Pool 상태가 모금 인 경우에 운영/잠김/모금중지/실패 로만 변경된다.", async function () {
     const { stakingPool, suffle, staker_1, owner } =
       await deployStakingPoolFixture();
 
@@ -95,6 +95,9 @@ describe("Status", function () {
 
     await expect(stakingPool.closePool()).to.be.revertedWith(
       "Pool must be in Operating state to be closed"
+    );
+    await expect(stakingPool.stopPoolOperating()).to.be.revertedWith(
+      "Pool must be in Fundraising or Operating state to be OperatingStopped"
     );
 
     let status;
@@ -116,9 +119,9 @@ describe("Status", function () {
     snapshotId = await ethers.provider.send("evm_snapshot", []);
 
     // 중지 상태로 변경
-    await stakingPool.stopPool();
+    await stakingPool.stopPoolFundrasing();
     status = await stakingPool.state();
-    expect(status).to.equal(PoolState.Stopped);
+    expect(status).to.equal(PoolState.FundraisingStopped);
 
     await ethers.provider.send("evm_revert", [snapshotId]);
     snapshotId = await ethers.provider.send("evm_snapshot", []);
@@ -129,7 +132,7 @@ describe("Status", function () {
     expect(status).to.equal(PoolState.Failed);
   });
 
-  it("Pool 상태가 운영 인 경우에 종료/중지 로만 변경된다.", async function () {
+  it("Pool 상태가 운영 인 경우에 종료/운영중지 로만 변경된다.", async function () {
     const { stakingPool, suffle, staker_1, owner } =
       await deployStakingPoolFixture();
 
@@ -147,6 +150,9 @@ describe("Status", function () {
     await expect(stakingPool.failPool()).to.be.revertedWith(
       "Pool must be in Fundraising state to be marked as failed"
     );
+    await expect(stakingPool.stopPoolFundrasing()).to.be.revertedWith(
+      "Pool must be in Fundraising or Operating state to be FundraisingStopped"
+    );
 
     let status;
 
@@ -159,9 +165,9 @@ describe("Status", function () {
     snapshotId = await ethers.provider.send("evm_snapshot", []);
 
     // 중지 상태로 변경
-    await stakingPool.stopPool();
+    await stakingPool.stopPoolOperating();
     status = await stakingPool.state();
-    expect(status).to.equal(PoolState.Stopped);
+    expect(status).to.equal(PoolState.OperatingStopped);
 
     await ethers.provider.send("evm_revert", [snapshotId]);
     snapshotId = await ethers.provider.send("evm_snapshot", []);
@@ -184,8 +190,11 @@ describe("Status", function () {
     await expect(stakingPool.lockPool()).to.be.revertedWith(
       "Pool must be in Fundraising state to be locked"
     );
-    await expect(stakingPool.stopPool()).to.be.revertedWith(
-      "Pool must be in Fundraising or Operating state to be stopped"
+    await expect(stakingPool.stopPoolFundrasing()).to.be.revertedWith(
+      "Pool must be in Fundraising or Operating state to be FundraisingStopped"
+    );
+    await expect(stakingPool.stopPoolOperating()).to.be.revertedWith(
+      "Pool must be in Fundraising or Operating state to be OperatingStopped"
     );
     await expect(stakingPool.failPool()).to.be.revertedWith(
       "Pool must be in Fundraising state to be marked as failed"
@@ -208,8 +217,11 @@ describe("Status", function () {
     await expect(stakingPool.lockPool()).to.be.revertedWith(
       "Pool must be in Fundraising state to be locked"
     );
-    await expect(stakingPool.stopPool()).to.be.revertedWith(
-      "Pool must be in Fundraising or Operating state to be stopped"
+    await expect(stakingPool.stopPoolFundrasing()).to.be.revertedWith(
+      "Pool must be in Fundraising or Operating state to be FundraisingStopped"
+    );
+    await expect(stakingPool.stopPoolOperating()).to.be.revertedWith(
+      "Pool must be in Fundraising or Operating state to be OperatingStopped"
     );
     await expect(stakingPool.failPool()).to.be.revertedWith(
       "Pool must be in Fundraising state to be marked as failed"
@@ -220,12 +232,12 @@ describe("Status", function () {
     expect(status).to.equal(PoolState.Operating);
   });
 
-  it("Pool 상태가 중지 인 경우에 상태는 변경 되지 않는다.", async function () {
+  it("Pool 상태가 모금중지 인 경우에 상태는 변경 되지 않는다.", async function () {
     const { stakingPool, suffle, staker_1, owner } =
       await deployStakingPoolFixture();
 
     await stakingPool.startFundraising();
-    await stakingPool.stopPool();
+    await stakingPool.stopPoolFundrasing();
 
     await expect(stakingPool.startFundraising()).to.be.revertedWith(
       "Pool must be in Waiting state to start fundraising"
@@ -241,6 +253,37 @@ describe("Status", function () {
     );
     await expect(stakingPool.failPool()).to.be.revertedWith(
       "Pool must be in Fundraising state to be marked as failed"
+    );
+    await expect(stakingPool.stopPoolOperating()).to.be.revertedWith(
+      "Pool must be in Fundraising or Operating state to be OperatingStopped"
+    );
+  });
+
+  it("Pool 상태가 운영중지 인 경우에 상태는 변경 되지 않는다.", async function () {
+    const { stakingPool, suffle, staker_1, owner } =
+      await deployStakingPoolFixture();
+
+    await stakingPool.startFundraising();
+    await stakingPool.startOperating();
+    await stakingPool.stopPoolOperating();
+
+    await expect(stakingPool.startFundraising()).to.be.revertedWith(
+      "Pool must be in Waiting state to start fundraising"
+    );
+    await expect(stakingPool.startOperating()).to.be.revertedWith(
+      "Pool must be in Fundraising or Locked state to start operating"
+    );
+    await expect(stakingPool.closePool()).to.be.revertedWith(
+      "Pool must be in Operating state to be closed"
+    );
+    await expect(stakingPool.lockPool()).to.be.revertedWith(
+      "Pool must be in Fundraising state to be locked"
+    );
+    await expect(stakingPool.failPool()).to.be.revertedWith(
+      "Pool must be in Fundraising state to be marked as failed"
+    );
+    await expect(stakingPool.stopPoolFundrasing()).to.be.revertedWith(
+      "Pool must be in Fundraising or Operating state to be FundraisingStopped"
     );
   });
 
@@ -263,8 +306,11 @@ describe("Status", function () {
     await expect(stakingPool.lockPool()).to.be.revertedWith(
       "Pool must be in Fundraising state to be locked"
     );
-    await expect(stakingPool.stopPool()).to.be.revertedWith(
-      "Pool must be in Fundraising or Operating state to be stopped"
+    await expect(stakingPool.stopPoolFundrasing()).to.be.revertedWith(
+      "Pool must be in Fundraising or Operating state to be FundraisingStopped"
+    );
+    await expect(stakingPool.stopPoolOperating()).to.be.revertedWith(
+      "Pool must be in Fundraising or Operating state to be OperatingStopped"
     );
   });
 });

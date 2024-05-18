@@ -7,7 +7,8 @@ export enum PoolState {
   Operating,
   Closed,
   Locked,
-  Stopped,
+  FundraisingStopped,
+  OperatingStopped,
   Failed,
 }
 

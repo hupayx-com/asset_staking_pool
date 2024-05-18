@@ -216,7 +216,7 @@ describe("UnStaking", function () {
       .connect(staker_1)
       .stake(ethers.parseEther(STAKING_AMOUNT_ETHER_730));
 
-    await stakingPool.connect(owner).stopPool();
+    await stakingPool.connect(owner).stopPoolFundrasing();
 
     await expect(
       stakingPool
