@@ -335,7 +335,7 @@ contract StakingPool {
     require(
       state == State.Operating ||
         state == State.Closed ||
-        state == State.FundraisingStopped
+        state == State.OperatingStopped
     );
 
     require(
