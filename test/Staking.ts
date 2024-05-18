@@ -34,6 +34,10 @@ describe("Staking", function () {
       await staker_1.getAddress(),
       ethers.parseEther("1000000000")
     );
+    await suffle.transfer(
+      await staker_2.getAddress(),
+      ethers.parseEther("1000000000")
+    );
 
     return { stakingPool, suffle, owner, staker_1, staker_2 };
   }
@@ -74,5 +78,119 @@ describe("Staking", function () {
     expect(stakeRecord.nextPendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord.scaledTokenPrice).to.equal(1000000);
     expect(stakeRecord.dailyInterest).to.equal(ethers.parseEther("1"));
+  });
+
+  it("2 명의 사용자가 각각 토큰을 스테이킹 한다.", async function () {
+    const { stakingPool, suffle, staker_1, owner } =
+      await deployStakingPoolFixture();
+
+    // staking 은 모금/운영 시에만 가능
+    await stakingPool.connect(owner).startFundraising();
+
+    const STAKING_AMOUNT_ETHER = "365";
+    const STAKING_AMOUNT_ETHER_2 = "730";
+
+    await suffle
+      .connect(staker_1)
+      .approve(
+        stakingPool.getAddress(),
+        ethers.parseEther(STAKING_AMOUNT_ETHER)
+      );
+    await stakingPool
+      .connect(staker_1)
+      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER));
+
+    await stakingPool.connect(owner).updateScaledTokenPrice(5000000);
+
+    await suffle
+      .connect(staker_2)
+      .approve(
+        stakingPool.getAddress(),
+        ethers.parseEther(STAKING_AMOUNT_ETHER_2)
+      );
+    await stakingPool
+      .connect(staker_2)
+      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER_2));
+
+    const stakeRecord_1 = await stakingPool.stakingRecords(
+      await staker_1.getAddress(),
+      0
+    );
+    expect(stakeRecord_1.amountStaked).to.equal(
+      ethers.parseEther(STAKING_AMOUNT_ETHER)
+    );
+    expect(stakeRecord_1.receivedRewardToken).to.equal(0);
+    expect(stakeRecord_1.nextPendingRewardScheduleIndex).to.equal(0);
+    expect(stakeRecord_1.scaledTokenPrice).to.equal(1000000);
+    expect(stakeRecord_1.dailyInterest).to.equal(ethers.parseEther("1"));
+
+    const stakeRecord_2 = await stakingPool.stakingRecords(
+      await staker_2.getAddress(),
+      0
+    );
+    expect(stakeRecord_2.amountStaked).to.equal(
+      ethers.parseEther(STAKING_AMOUNT_ETHER_2)
+    );
+    expect(stakeRecord_2.receivedRewardToken).to.equal(0);
+    expect(stakeRecord_2.nextPendingRewardScheduleIndex).to.equal(0);
+    expect(stakeRecord_2.scaledTokenPrice).to.equal(5000000);
+    expect(stakeRecord_2.dailyInterest).to.equal(ethers.parseEther("10"));
+  });
+
+  it("1 명의 사용자가 토큰을 2 번 스테이킹 한다.", async function () {
+    const { stakingPool, suffle, staker_1, owner } =
+      await deployStakingPoolFixture();
+
+    // staking 은 모금/운영 시에만 가능
+    await stakingPool.connect(owner).startFundraising();
+
+    const STAKING_AMOUNT_ETHER = "365";
+    const STAKING_AMOUNT_ETHER_2 = "730";
+
+    await suffle
+      .connect(staker_1)
+      .approve(
+        stakingPool.getAddress(),
+        ethers.parseEther(STAKING_AMOUNT_ETHER)
+      );
+    await stakingPool
+      .connect(staker_1)
+      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER));
+
+    await stakingPool.connect(owner).updateScaledTokenPrice(5000000);
+
+    await suffle
+      .connect(staker_1)
+      .approve(
+        stakingPool.getAddress(),
+        ethers.parseEther(STAKING_AMOUNT_ETHER_2)
+      );
+    await stakingPool
+      .connect(staker_1)
+      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER_2));
+
+    const stakeRecord_1 = await stakingPool.stakingRecords(
+      await staker_1.getAddress(),
+      0
+    );
+    expect(stakeRecord_1.amountStaked).to.equal(
+      ethers.parseEther(STAKING_AMOUNT_ETHER)
+    );
+    expect(stakeRecord_1.receivedRewardToken).to.equal(0);
+    expect(stakeRecord_1.nextPendingRewardScheduleIndex).to.equal(0);
+    expect(stakeRecord_1.scaledTokenPrice).to.equal(1000000);
+    expect(stakeRecord_1.dailyInterest).to.equal(ethers.parseEther("1"));
+
+    const stakeRecord_2 = await stakingPool.stakingRecords(
+      await staker_1.getAddress(),
+      1
+    );
+    expect(stakeRecord_2.amountStaked).to.equal(
+      ethers.parseEther(STAKING_AMOUNT_ETHER_2)
+    );
+    expect(stakeRecord_2.receivedRewardToken).to.equal(0);
+    expect(stakeRecord_2.nextPendingRewardScheduleIndex).to.equal(0);
+    expect(stakeRecord_2.scaledTokenPrice).to.equal(5000000);
+    expect(stakeRecord_2.dailyInterest).to.equal(ethers.parseEther("10"));
   });
 });

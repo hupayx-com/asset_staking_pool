@@ -96,193 +96,6 @@ contract StakingPool {
     currentScaledTokenPrice = _price;
   }
 
-  // 보상 스케줄을 추가한다.
-  function addRewardSchedule(
-    uint256 _scaledTokenPriceAtPayout,
-    uint256 _startDate,
-    uint256 _endDate
-  ) external onlyAdmin {
-    require(_startDate < _endDate, "Start date must be before end date");
-    RewardSchedules.push(
-      RewardSchedule({
-        scaledTokenPriceAtPayout: _scaledTokenPriceAtPayout,
-        startDate: _startDate,
-        endDate: _endDate
-      })
-    );
-  }
-
-  // 스테이킹을 수행한다.
-  function stake(uint256 _amount) external {
-    require(
-      state == State.Fundraising || state == State.Operating,
-      "Invalid state for staking"
-    );
-
-    // TODO
-    // - 최소 staking 가격 체크
-    // require(
-    //   _amount >= details.minStakePrice,
-    //   "Amount is less than the minimum stake amount"
-    // );
-
-    IERC20(details.stakingToken).transferFrom(
-      msg.sender,
-      address(this),
-      _amount
-    );
-
-    uint256 dailyInterest = ((_amount * currentScaledTokenPrice) *
-      details.annualScaledInterestRate) /
-      365 /* 1 year */ /
-      TOKEN_PRICE_SCALEUP /
-      INTEREST_RATE_SCALEUP;
-
-    stakingRecords[msg.sender].push(
-      StakingRecord({
-        amountStaked: _amount,
-        stakeTimestamp: block.timestamp,
-        receivedRewardToken: 0,
-        nextPendingRewardScheduleIndex: 0,
-        scaledTokenPrice: currentScaledTokenPrice,
-        dailyInterest: dailyInterest
-      })
-    );
-
-    emit Staked(msg.sender, _amount);
-  }
-
-  // 받을 보상을 확인 한다.
-  // function getPendingRewardToken(
-  //   address _user,
-  //   uint256 _stakeIndex
-  // ) public view returns (uint256, uint256) {
-  //   require(_stakeIndex < stakingRecords[_user].length, "Invalid stake index");
-
-  //   StakingRecord storage userStake = stakingRecords[_user][_stakeIndex];
-  //   uint256 reward = 0;
-  //   uint256 currentIndex = userStake.nextPendingRewardScheduleIndex;
-
-  //   for (
-  //     uint256 i = userStake.nextPendingRewardScheduleIndex;
-  //     i < RewardSchedules.length;
-  //     i++
-  //   ) {
-  //     RewardSchedule memory schedule = RewardSchedules[i];
-
-  //     // 보상 계산을 위한 시작 시점: 스테이킹 시점과 스케줄의 시작 시점 중 더 늦은 시점
-  //     uint256 effectiveStartDate = userStake.stakeTimestamp > schedule.startDate
-  //       ? userStake.stakeTimestamp
-  //       : schedule.startDate;
-
-  //     // 보상 계산을 위한 종료 시점: 현재 시간과 스케줄의 종료 시점 중 더 이른 시점
-  //     uint256 effectiveEndDate = block.timestamp < schedule.endDate
-  //       ? block.timestamp
-  //       : schedule.endDate;
-
-  //     // 스테이킹 시점이 스케줄의 종료 시점보다 이전이고, 현재 시간이 스케줄의 시작 시점보다 이후인 경우에만 보상을 계산합니다.
-  //     if (
-  //       userStake.stakeTimestamp < schedule.endDate &&
-  //       block.timestamp > schedule.startDate
-  //     ) {
-  //       if (effectiveStartDate < effectiveEndDate) {
-  //         uint256 stakingDays = (effectiveEndDate - effectiveStartDate) /
-  //           1 days;
-
-  //         reward += (((userStake.dailyInterest * stakingDays) /
-  //           schedule.scaledTokenPriceAtPayout) * TOKEN_PRICE_SCALEUP);
-  //       }
-  //     }
-
-  //     // 현재 시간이 보상 종료 시간을 넘었을때 다음 보상 스케줄로 넘어간다.
-  //     if (block.timestamp >= schedule.endDate) {
-  //       currentIndex += 1;
-  //     }
-  //   }
-
-  //   return (reward, currentIndex);
-  // }
-
-  // 받을 보상을 확인 한다.
-  function getPendingRewardToken(
-    address _user,
-    uint256 _stakeIndex
-  ) public view returns (uint256, uint256) {
-    require(_stakeIndex < stakingRecords[_user].length, "Invalid stake index");
-
-    StakingRecord storage userStake = stakingRecords[_user][_stakeIndex];
-    uint256 reward = 0;
-    uint256 currentIndex = userStake.nextPendingRewardScheduleIndex;
-
-    for (
-      uint256 i = userStake.nextPendingRewardScheduleIndex;
-      i < RewardSchedules.length;
-      i++
-    ) {
-      RewardSchedule memory schedule = RewardSchedules[i];
-
-      // 현재 시간이 보상 종료 시간을 넘지 않았으면 보상 계산에서 제외
-      if (block.timestamp < schedule.endDate) {
-        break;
-      }
-
-      // 보상 계산을 위한 시작 시점: 스테이킹 시점과 스케줄의 시작 시점 중 더 늦은 시점
-      uint256 effectiveStartDate = userStake.stakeTimestamp > schedule.startDate
-        ? userStake.stakeTimestamp
-        : schedule.startDate;
-
-      // 보상 계산을 위한 종료 시점: 현재 시간과 스케줄의 종료 시점 중 더 이른 시점
-      uint256 effectiveEndDate = block.timestamp < schedule.endDate
-        ? block.timestamp
-        : schedule.endDate;
-
-      // 스테이킹 시점이 스케줄의 종료 시점보다 이전이고, 현재 시간이 스케줄의 시작 시점보다 이후인 경우에만 보상을 계산합니다.
-      if (
-        userStake.stakeTimestamp < schedule.endDate &&
-        block.timestamp > schedule.startDate
-      ) {
-        if (effectiveStartDate < effectiveEndDate) {
-          uint256 stakingDays = (effectiveEndDate - effectiveStartDate) /
-            1 days;
-
-          reward += (((userStake.dailyInterest * stakingDays) /
-            schedule.scaledTokenPriceAtPayout) * TOKEN_PRICE_SCALEUP);
-        }
-      }
-
-      // 현재 시간이 보상 종료 시간을 넘었을때 다음 보상 스케줄로 넘어간다.
-      if (block.timestamp >= schedule.endDate) {
-        currentIndex += 1;
-      }
-    }
-
-    return (reward, currentIndex);
-  }
-
-  // 보상 요청
-  function claimRewardToken(uint256 _stakeIndex) public {
-    require(state != State.Waiting && state != State.Fundraising);
-
-    require(
-      _stakeIndex < stakingRecords[msg.sender].length,
-      "Invalid stake index"
-    );
-
-    (uint256 reward, uint256 nextIndex) = getPendingRewardToken(
-      msg.sender,
-      _stakeIndex
-    );
-    require(reward > 0, "No reward available");
-
-    StakingRecord storage userStake = stakingRecords[msg.sender][_stakeIndex];
-    userStake.receivedRewardToken += reward;
-    userStake.nextPendingRewardScheduleIndex = nextIndex;
-
-    IERC20(details.stakingToken).transfer(msg.sender, reward);
-
-    emit RewardClaimed(msg.sender, reward);
-  }
-
   ///////////////////////
   // Pool 관련 설정 함수들 //
   ///////////////////////
@@ -299,15 +112,6 @@ contract StakingPool {
     require(state == State.Waiting);
 
     details.description = _description;
-  }
-
-  // 상태 변경 함수들
-  // 모금 시작
-  function startFundraising() public onlyAdmin {
-    require(state == State.Waiting);
-
-    state = State.Fundraising; // 상태를 '모금 기간'으로 변경
-    emit FundraisingStarted();
   }
 
   // Pool 설정 관련 함수들 (모금 대기 상태에서만 설정 가능)
@@ -347,39 +151,213 @@ contract StakingPool {
     details.stakingToken = _tokenAddress;
   }
 
-  // 모금 기간 관련 함수들
+  // 보상 스케줄을 추가한다.
+  function addRewardSchedule(
+    uint256 _scaledTokenPriceAtPayout,
+    uint256 _startDate,
+    uint256 _endDate
+  ) external onlyAdmin {
+    require(_startDate < _endDate, "Start date must be before end date");
+    RewardSchedules.push(
+      RewardSchedule({
+        scaledTokenPriceAtPayout: _scaledTokenPriceAtPayout,
+        startDate: _startDate,
+        endDate: _endDate
+      })
+    );
+  }
 
-  // 모금 중지
+  //////////////////
+  // 상태 변경 함수들 //
+  //////////////////
+
+  // 모금 시작
+  function startFundraising() public onlyAdmin {
+    require(state == State.Waiting);
+
+    state = State.Fundraising; // 상태를 '모금 기간'으로 변경
+    emit FundraisingStarted();
+  }
+
+  // 운영 시작
+  function startOperating() public onlyAdmin {
+    require(state == State.Fundraising);
+
+    // 상태를 '운영 기간'으로 변경하는 로직
+    state = State.Operating;
+    emit OperatingStarted();
+  }
+
+  // Pool 종료
+  function closePool() public onlyAdmin {
+    require(state == State.Operating);
+
+    // 스테이킹 풀을 종료하는 로직
+    state = State.Closed;
+    emit PoolClosed();
+  }
+
+  // 중지
   function stopFundraising() public onlyAdmin {
     require(state == State.Fundraising);
 
-    // 모금 중지 로직
     state = State.Stopped;
     emit FundraisingStopped();
   }
 
-  // SFL 언스테이킹
-  function unstakeSFL(uint256 _amount) public {
-    require(state == State.Fundraising);
+  //////////////
+  // 사용자 기능 //
+  //////////////
 
-    // 언스테이킹 로직
+  // 스테이킹
+  function stake(uint256 _amount) external {
+    require(
+      state == State.Fundraising || state == State.Operating,
+      "Invalid state for staking"
+    );
+
+    // TODO
+    // - 최소 staking 가격 체크
+    // require(
+    //   _amount >= details.minStakePrice,
+    //   "Amount is less than the minimum stake amount"
+    // );
+
+    IERC20(details.stakingToken).transferFrom(
+      msg.sender,
+      address(this),
+      _amount
+    );
+
+    uint256 dailyInterest = ((_amount * currentScaledTokenPrice) *
+      details.annualScaledInterestRate) /
+      365 /* 1 year */ /
+      TOKEN_PRICE_SCALEUP /
+      INTEREST_RATE_SCALEUP;
+
+    stakingRecords[msg.sender].push(
+      StakingRecord({
+        amountStaked: _amount,
+        stakeTimestamp: block.timestamp,
+        receivedRewardToken: 0,
+        nextPendingRewardScheduleIndex: 0,
+        scaledTokenPrice: currentScaledTokenPrice,
+        dailyInterest: dailyInterest
+      })
+    );
+
+    emit Staked(msg.sender, _amount);
+  }
+
+  // 언스테이킹
+  function unStake(uint256 _stakeIndex, uint256 _amount) public {
+    require(
+      state == State.Fundraising,
+      "Unstaking is only allowed during fundraising"
+    );
+
     StakingRecord[] storage records = stakingRecords[msg.sender];
-    uint256 remainingAmount = _amount;
+    require(_stakeIndex < records.length, "Invalid stake index");
 
-    for (uint256 i = 0; i < records.length; i++) {
-      if (records[i].amountStaked >= remainingAmount) {
-        records[i].amountStaked -= remainingAmount;
-        remainingAmount = 0;
+    StakingRecord storage record = records[_stakeIndex];
+    require(record.amountStaked >= _amount, "Insufficient staked amount");
+
+    if (record.amountStaked == _amount) {
+      records[_stakeIndex] = records[records.length - 1];
+      records.pop();
+    } else {
+      record.amountStaked -= _amount;
+
+      uint256 dailyInterest = ((record.amountStaked * record.scaledTokenPrice) *
+        details.annualScaledInterestRate) /
+        365 /* 1 year */ /
+        TOKEN_PRICE_SCALEUP /
+        INTEREST_RATE_SCALEUP;
+
+      record.dailyInterest = dailyInterest;
+    }
+
+    IERC20(details.stakingToken).transfer(msg.sender, _amount);
+  }
+
+  // 보상 확인
+  function getPendingRewardToken(
+    address _user,
+    uint256 _stakeIndex
+  ) public view returns (uint256, uint256) {
+    require(_stakeIndex < stakingRecords[_user].length, "Invalid stake index");
+
+    StakingRecord storage userStake = stakingRecords[_user][_stakeIndex];
+    uint256 reward = 0;
+    uint256 nextIndex = userStake.nextPendingRewardScheduleIndex;
+
+    for (
+      uint256 i = userStake.nextPendingRewardScheduleIndex;
+      i < RewardSchedules.length;
+      i++
+    ) {
+      RewardSchedule memory schedule = RewardSchedules[i];
+
+      // 현재 시간이 보상 종료 시간을 넘지 않았으면 보상 계산에서 제외
+      if (block.timestamp < schedule.endDate) {
         break;
-      } else {
-        remainingAmount -= records[i].amountStaked;
-        records[i].amountStaked = 0;
+      }
+
+      // 보상 계산을 위한 시작 시점: 스테이킹 시점과 스케줄의 시작 시점 중 더 늦은 시점
+      uint256 effectiveStartDate = userStake.stakeTimestamp > schedule.startDate
+        ? userStake.stakeTimestamp
+        : schedule.startDate;
+
+      // 보상 계산을 위한 종료 시점: 현재 시간과 스케줄의 종료 시점 중 더 이른 시점
+      uint256 effectiveEndDate = block.timestamp < schedule.endDate
+        ? block.timestamp
+        : schedule.endDate;
+
+      // 스테이킹 시점이 스케줄의 종료 시점보다 이전이고, 현재 시간이 스케줄의 시작 시점보다 이후인 경우에만 보상을 계산합니다.
+      if (
+        userStake.stakeTimestamp < schedule.endDate &&
+        block.timestamp > schedule.startDate
+      ) {
+        if (effectiveStartDate < effectiveEndDate) {
+          uint256 stakingDays = (effectiveEndDate - effectiveStartDate) /
+            1 days;
+
+          reward += (((userStake.dailyInterest * stakingDays) /
+            schedule.scaledTokenPriceAtPayout) * TOKEN_PRICE_SCALEUP);
+        }
+      }
+
+      // 현재 시간이 보상 종료 시간을 넘었을때 다음 보상 스케줄로 넘어간다.
+      if (block.timestamp >= schedule.endDate) {
+        nextIndex += 1;
       }
     }
 
-    require(remainingAmount == 0, "Insufficient staked amount");
+    return (reward, nextIndex);
+  }
 
-    IERC20(details.stakingToken).transfer(msg.sender, _amount);
+  // 보상 요청
+  function claimRewardToken(uint256 _stakeIndex) public {
+    require(state != State.Waiting && state != State.Fundraising);
+
+    require(
+      _stakeIndex < stakingRecords[msg.sender].length,
+      "Invalid stake index"
+    );
+
+    (uint256 reward, uint256 nextIndex) = getPendingRewardToken(
+      msg.sender,
+      _stakeIndex
+    );
+    require(reward > 0, "No reward available");
+
+    StakingRecord storage userStake = stakingRecords[msg.sender][_stakeIndex];
+    userStake.receivedRewardToken += reward;
+    userStake.nextPendingRewardScheduleIndex = nextIndex;
+
+    IERC20(details.stakingToken).transfer(msg.sender, reward);
+
+    emit RewardClaimed(msg.sender, reward);
   }
 
   // 모금 실패 시 자금 회수
@@ -398,18 +376,7 @@ contract StakingPool {
     IERC20(details.stakingToken).transfer(msg.sender, totalAmount);
   }
 
-  // 운영 기간 관련 함수들
-
-  // 운영 중지
-  function stopOperating() public onlyAdmin {
-    require(state == State.Operating);
-
-    // 운영 중지 로직
-    state = State.Stopped;
-    emit OperatingStopped();
-  }
-
-  // 보상 조회
+  // 사용자의 전체 보상 조회
   function getPendingRewardTokens(
     address _staker
   ) public view returns (uint256) {
@@ -427,7 +394,7 @@ contract StakingPool {
     return totalReward;
   }
 
-  // 누적 보상 조회
+  // 전체 누적 보상 조회
   function viewAccumulatedRewards(
     address _staker
   ) public view returns (uint256) {
@@ -444,7 +411,7 @@ contract StakingPool {
     return totalReward;
   }
 
-  // 보상 요청
+  // 전체 보상 요청
   function requestRewards() public {
     require(state == State.Operating);
 
@@ -472,23 +439,10 @@ contract StakingPool {
     IERC20(details.stakingToken).transfer(msg.sender, totalAmount);
   }
 
-  // 상태 변경 함수들
-
-  // 운영 시작
-  function startOperating() public onlyAdmin {
-    require(state == State.Fundraising);
-
-    // 상태를 '운영 기간'으로 변경하는 로직
-    state = State.Operating;
-    emit OperatingStarted();
-  }
-
-  // Pool 종료
-  function closePool() public onlyAdmin {
-    require(state == State.Operating);
-
-    // 스테이킹 풀을 종료하는 로직
-    state = State.Closed;
-    emit PoolClosed();
+  // function to get length of the staking records array
+  function getStakingRecordLength(
+    address _user
+  ) external view returns (uint256) {
+    return stakingRecords[_user].length;
   }
 }

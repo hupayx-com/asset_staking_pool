@@ -48,7 +48,7 @@ describe("RewardClaim", function () {
     });
   });
 
-  it("모든 보상 기간이 지난 후 전체 보상을 요청 & 수령한다.(총 보상 횟수: 1)", async function () {
+  it("모든 보상 기간이 지난 후 전체 보상을 요청한다.(총 보상 횟수: 1)", async function () {
     const { stakingPool, suffle, staker_1, owner } =
       await deployStakingPoolFixture();
 
@@ -104,7 +104,7 @@ describe("RewardClaim", function () {
     expect(stakeRecord.nextPendingRewardScheduleIndex).to.equal(1);
   });
 
-  it("모든 보상 기간이 지난 후 전체 보상을 요청 & 수령한다.(총 보상 횟수: 2)", async function () {
+  it("모든 보상 기간이 지난 후 전체 보상을 요청한다.(총 보상 횟수: 2)", async function () {
     const { stakingPool, suffle, staker_1, owner } =
       await deployStakingPoolFixture();
 
@@ -189,7 +189,6 @@ describe("RewardClaim", function () {
       .stake(ethers.parseEther(STAKING_AMOUNT_ETHER));
 
     const currentTime = await getCurrentBlockchainTime();
-    console.log("=> currentTime: ", currentTime);
 
     let passedTime = 0;
     await stakingPool.addRewardSchedule(
@@ -210,9 +209,6 @@ describe("RewardClaim", function () {
       SECONDS_IN_A_DAY * 11 - (passedTime + 2),
     ]);
     await ethers.provider.send("evm_mine");
-
-    const currentTime2 = await getCurrentBlockchainTime();
-    console.log("=> currentTime2: ", currentTime2);
 
     // 보상 청구 전 사용자의 토큰 잔액 확인
     const initialBalance = await suffle.balanceOf(await staker_1.getAddress());
@@ -301,7 +297,7 @@ describe("RewardClaim", function () {
     expect(stakeRecord.nextPendingRewardScheduleIndex).to.equal(1);
   });
 
-  it("1 번째 보상 기간 내 보상 요청 후 2 번째 보상 기간 내 보상 요청 시 1 번째 보상만을 수령한다.(총 보상 횟수: 2)", async function () {
+  it("2 번째 보상 기간 내 보상 요청 후 3 번째 보상 기간 내 보상을 요청한다.(총 보상 횟수: 3)", async function () {
     const { stakingPool, suffle, staker_1, owner } =
       await deployStakingPoolFixture();
 
@@ -335,28 +331,31 @@ describe("RewardClaim", function () {
       currentTime + SECONDS_IN_A_DAY * 11,
       currentTime + SECONDS_IN_A_DAY * 21 // 10일 후
     );
+    await stakingPool.addRewardSchedule(
+      1000000,
+      currentTime + SECONDS_IN_A_DAY * 21,
+      currentTime + SECONDS_IN_A_DAY * 31 // 10일 후
+    );
 
     ///////////////////
     // 1 번째 보상 요청 //
     ///////////////////
 
     // 시간을 앞당김
-    await ethers.provider.send("evm_increaseTime", [SECONDS_IN_A_DAY * 5 - 3]);
+    await ethers.provider.send("evm_increaseTime", [SECONDS_IN_A_DAY * 11 - 2]);
     await ethers.provider.send("evm_mine");
 
     // 보상 청구 전 사용자의 토큰 잔액 확인
     let initialBalance = await suffle.balanceOf(await staker_1.getAddress());
 
     // 보상 청구 시 오류 발생 확인
-    await expect(
-      stakingPool.connect(staker_1).claimRewardToken(0)
-    ).to.be.revertedWith("No reward available");
+    await stakingPool.connect(staker_1).claimRewardToken(0);
 
     // 보상 청구 후 사용자의 토큰 잔액 확인
     let finalBalance = await suffle.balanceOf(await staker_1.getAddress());
 
     // 예상되는 보상 금액
-    let expectedReward = ethers.parseEther("0");
+    let expectedReward = ethers.parseEther("5");
 
     // 잔액 비교
     expect(finalBalance - initialBalance).to.equal(expectedReward);
@@ -365,15 +364,15 @@ describe("RewardClaim", function () {
       await staker_1.getAddress(),
       0
     );
-    expect(stakeRecord.receivedRewardToken).to.equal(ethers.parseEther("0"));
-    expect(stakeRecord.nextPendingRewardScheduleIndex).to.equal(0);
+    expect(stakeRecord.receivedRewardToken).to.equal(ethers.parseEther("5"));
+    expect(stakeRecord.nextPendingRewardScheduleIndex).to.equal(1);
 
     ///////////////////
     // 2 번째 보상 요청 //
     ///////////////////
 
     // 시간을 앞당김
-    await ethers.provider.send("evm_increaseTime", [SECONDS_IN_A_DAY * 11 - 1]);
+    await ethers.provider.send("evm_increaseTime", [SECONDS_IN_A_DAY * 10 - 3]);
     await ethers.provider.send("evm_mine");
 
     // 보상 청구 전 사용자의 토큰 잔액 확인
@@ -385,7 +384,7 @@ describe("RewardClaim", function () {
     finalBalance = await suffle.balanceOf(await staker_1.getAddress());
 
     // 예상되는 보상 금액
-    expectedReward = ethers.parseEther("5");
+    expectedReward = ethers.parseEther("2");
 
     // 잔액 비교
     expect(finalBalance - initialBalance).to.equal(expectedReward);
@@ -394,8 +393,74 @@ describe("RewardClaim", function () {
       await staker_1.getAddress(),
       0
     );
-    // 5(1th)
-    expect(stakeRecord.receivedRewardToken).to.equal(ethers.parseEther("5"));
+    // 5(1th) + 2(2th)
+    expect(stakeRecord.receivedRewardToken).to.equal(ethers.parseEther("7"));
+    expect(stakeRecord.nextPendingRewardScheduleIndex).to.equal(2);
+  });
+
+  it("1 번째 보상 기간내에 staking 하고 2 번째 보상 기간내에 보상을 요청한다.(총 보상 횟수: 2)", async function () {
+    const { stakingPool, suffle, staker_1, owner } =
+      await deployStakingPoolFixture();
+
+    // 보상은 staking pool 의 상태가 "운영" 이후 부터 가능하다.
+    await stakingPool.connect(owner).startFundraising();
+    await stakingPool.connect(owner).startOperating();
+
+    await stakingPool.connect(owner).updateScaledTokenPrice(1000000);
+
+    const STAKING_AMOUNT_ETHER = "365";
+
+    let currentTime = await getCurrentBlockchainTime();
+
+    await stakingPool.addRewardSchedule(
+      2000000, // 스케일업된 토큰 가격
+      currentTime + SECONDS_IN_A_DAY * 1,
+      currentTime + SECONDS_IN_A_DAY * 11 // 10일 후
+    );
+    await stakingPool.addRewardSchedule(
+      5000000,
+      currentTime + SECONDS_IN_A_DAY * 11,
+      currentTime + SECONDS_IN_A_DAY * 21 // 10일 후
+    );
+
+    // 시간을 앞당김
+    // 유효 스테이킹 기간 5일
+    await ethers.provider.send("evm_increaseTime", [SECONDS_IN_A_DAY * 6 - 4]);
+    await ethers.provider.send("evm_mine");
+
+    await suffle
+      .connect(staker_1)
+      .approve(
+        stakingPool.getAddress(),
+        ethers.parseEther(STAKING_AMOUNT_ETHER)
+      );
+    await stakingPool
+      .connect(staker_1)
+      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER));
+
+    // 시간을 앞당김
+    await ethers.provider.send("evm_increaseTime", [SECONDS_IN_A_DAY * 5 + 5]);
+    await ethers.provider.send("evm_mine");
+
+    // 보상 청구 전 사용자의 토큰 잔액 확인
+    const initialBalance = await suffle.balanceOf(await staker_1.getAddress());
+
+    await stakingPool.connect(staker_1).claimRewardToken(0);
+
+    // 보상 청구 후 사용자의 토큰 잔액 확인
+    const finalBalance = await suffle.balanceOf(await staker_1.getAddress());
+
+    // 예상되는 보상 금액
+    const expectedReward = ethers.parseEther("2.5");
+
+    // 잔액 비교
+    expect(finalBalance - initialBalance).to.equal(expectedReward);
+
+    const stakeRecord = await stakingPool.stakingRecords(
+      await staker_1.getAddress(),
+      0
+    );
+    expect(stakeRecord.receivedRewardToken).to.equal(ethers.parseEther("2.5"));
     expect(stakeRecord.nextPendingRewardScheduleIndex).to.equal(1);
   });
 });
