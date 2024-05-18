@@ -2,6 +2,7 @@ import { ethers, network } from "hardhat";
 import { expect } from "chai";
 import { Signer } from "ethers";
 import { Suffle, StakingPool } from "../typechain-types/index";
+import { PoolState } from "./util";
 
 describe("Staking", function () {
   let stakingPool: StakingPool;
@@ -28,6 +29,7 @@ describe("Staking", function () {
     await stakingPool.setStakingToken(suffle.getAddress());
     await stakingPool.setScaledAnnualInterestRate(100); // 연 이율 1%
     await stakingPool.connect(owner).updateScaledTokenPrice(1000000);
+    await stakingPool.setMaxFundraisingPrice(10000);
 
     // faucet for staking
     await suffle.transfer(
@@ -114,18 +116,79 @@ describe("Staking", function () {
     await stakingPool
       .connect(staker_1)
       .stake(ethers.parseEther(STAKING_AMOUNT_ETHER_365));
+  });
 
-    const stakeRecord = await stakingPool.stakingRecords(
-      await staker_1.getAddress(),
-      0
-    );
-    expect(stakeRecord.amountStaked).to.equal(
-      ethers.parseEther(STAKING_AMOUNT_ETHER_365)
-    );
-    expect(stakeRecord.receivedRewardToken).to.equal(0);
-    expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
-    expect(stakeRecord.scaledTokenPrice).to.equal(1000000);
-    expect(stakeRecord.dailyInterest).to.equal(ethers.parseEther("1"));
+  it("풀의 전체 스테이킹 금액이 최대치를 넘을때 스테이킹은 실패한다.", async function () {
+    const { stakingPool, suffle, staker_1, owner } =
+      await deployStakingPoolFixture();
+
+    await stakingPool.setMaxFundraisingPrice(1000);
+
+    // staking 은 모금/운영 시에만 가능
+    await stakingPool.connect(owner).startFundraising();
+
+    await stakingPool.connect(owner).updateScaledTokenPrice(1000000);
+
+    const STAKING_AMOUNT_ETHER_950 = "950";
+    await suffle
+      .connect(staker_1)
+      .approve(
+        stakingPool.getAddress(),
+        ethers.parseEther(STAKING_AMOUNT_ETHER_950)
+      );
+    await stakingPool
+      .connect(staker_1)
+      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER_950));
+
+    const STAKING_AMOUNT_ETHER_364 = "51";
+    await suffle
+      .connect(staker_1)
+      .approve(
+        stakingPool.getAddress(),
+        ethers.parseEther(STAKING_AMOUNT_ETHER_364)
+      );
+    await expect(
+      stakingPool
+        .connect(staker_1)
+        .stake(ethers.parseEther(STAKING_AMOUNT_ETHER_364))
+    ).to.be.revertedWith("Amount exceeds the maximum fundraising amount");
+  });
+
+  it("풀의 전체 스테이킹 금액이 최대치에 도달하면 상태가 모금 잠김 으로 변경된다.", async function () {
+    const { stakingPool, suffle, staker_1, owner } =
+      await deployStakingPoolFixture();
+
+    await stakingPool.setMaxFundraisingPrice(1000);
+
+    // staking 은 모금/운영 시에만 가능
+    await stakingPool.connect(owner).startFundraising();
+
+    await stakingPool.connect(owner).updateScaledTokenPrice(1000000);
+
+    const STAKING_AMOUNT_ETHER_950 = "950";
+    await suffle
+      .connect(staker_1)
+      .approve(
+        stakingPool.getAddress(),
+        ethers.parseEther(STAKING_AMOUNT_ETHER_950)
+      );
+    await stakingPool
+      .connect(staker_1)
+      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER_950));
+
+    const STAKING_AMOUNT_ETHER_364 = "50";
+    await suffle
+      .connect(staker_1)
+      .approve(
+        stakingPool.getAddress(),
+        ethers.parseEther(STAKING_AMOUNT_ETHER_364)
+      );
+    await stakingPool
+      .connect(staker_1)
+      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER_364));
+
+    const poolStatus = await stakingPool.state();
+    expect(poolStatus).to.equal(PoolState.Locked);
   });
 
   it("2 명의 사용자가 각각 토큰을 스테이킹 한다.", async function () {

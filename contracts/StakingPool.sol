@@ -31,6 +31,9 @@ contract StakingPool {
   // staking 시 현재 값을 적용하여 연이자를 계산
   uint256 public currentScaledTokenPrice = 0;
 
+  // 현재까지 모금된 총 금액
+  uint256 public currentTotalFundraising = 0;
+
   // staking pool 상태
   enum State {
     Waiting, // 대기 (-> 모금)
@@ -276,16 +279,32 @@ contract StakingPool {
       "Invalid state for staking"
     );
 
-    // 토큰 단위로 최소 스테이킹 금액을 계산
+    // 최소 스테이킹 금액 이상인지 확인
     uint256 minStakeAmountInTokens = (details.minStakePrice *
       decimal *
       TOKEN_PRICE_SCALEUP) / currentScaledTokenPrice;
 
-    // 최소 스테이킹 금액 이상인지 확인
     require(
       _amount >= minStakeAmountInTokens,
       "Amount is less than the minimum stake amount"
     );
+
+    // 최대 모금액을 초과하지 않는지 확인
+    uint256 stakingAmountInUSD = (_amount * currentScaledTokenPrice) / decimal;
+    uint256 newTotalFundraising = currentTotalFundraising + stakingAmountInUSD;
+    require(
+      newTotalFundraising <= details.maxFundraisingPrice * TOKEN_PRICE_SCALEUP,
+      "Amount exceeds the maximum fundraising amount"
+    );
+
+    // 최대 모금액에 도달한 경우 풀 상태를 "Locked"으로 변경
+    if (
+      newTotalFundraising == details.maxFundraisingPrice * TOKEN_PRICE_SCALEUP
+    ) {
+      state = State.Locked;
+      emit PoolLocked(address(this));
+    }
+    currentTotalFundraising = newTotalFundraising;
 
     IERC20(details.stakingToken).transferFrom(
       msg.sender,
