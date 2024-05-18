@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 // Uncomment this line to use console.log
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 interface IERC20 {
   function transferFrom(
@@ -23,6 +23,9 @@ contract StakingPool {
   uint256 public constant TOKEN_PRICE_SCALEUP = 1e6;
   // 소수점 계산을 위해 이자을 x100 scaleUp (ex. 이자율: 0.05 %)
   uint256 public constant ANNUAL_INTEREST_RATE_SCALEUP = 100;
+
+  // 기본은 wei 단위
+  uint256 public decimal = 1e18;
 
   // 실시간 Token 가격을 반영하기 위해 외부에서 주기적으로 업데이트 필요
   // staking 시 현재 값을 적용하여 연이자를 계산
@@ -104,21 +107,21 @@ contract StakingPool {
 
   // Pool 이름 설정
   function setPoolName(string memory _name) public onlyAdmin {
-    require(state == State.Waiting);
+    require(state == State.Waiting, "Pool is not in Waiting state");
 
     details.name = _name;
   }
 
   // Pool 설명 설정
   function setPoolDescription(string memory _description) public onlyAdmin {
-    require(state == State.Waiting);
+    require(state == State.Waiting, "Pool is not in Waiting state");
 
     details.description = _description;
   }
 
   // 최소 스테이킹 금액 설정
   function setMinStakePrice(uint256 _price) public onlyAdmin {
-    require(state == State.Waiting);
+    require(state == State.Waiting, "Pool is not in Waiting state");
 
     details.minStakePrice = _price;
   }
@@ -127,28 +130,28 @@ contract StakingPool {
   function setScaledAnnualInterestRate(
     uint256 _scaledInterestRate
   ) public onlyAdmin {
-    require(state == State.Waiting);
+    require(state == State.Waiting, "Pool is not in Waiting state");
 
     details.scaledAnnualInterestRate = _scaledInterestRate;
   }
 
   // 최소 모금 금액 설정
   function setMinFundraisingPrice(uint256 _price) public onlyAdmin {
-    require(state == State.Waiting);
+    require(state == State.Waiting, "Pool is not in Waiting state");
 
     details.minFundraisingPrice = _price;
   }
 
   // 최대 모금 금액 설정
   function setMaxFundraisingPrice(uint256 _price) public onlyAdmin {
-    require(state == State.Waiting);
+    require(state == State.Waiting, "Pool is not in Waiting state");
 
     details.maxFundraisingPrice = _price;
   }
 
   // 스테이킹 토큰 주소 설정
   function setStakingToken(address _tokenAddress) public onlyAdmin {
-    require(state == State.Waiting);
+    require(state == State.Waiting, "Pool is not in Waiting state");
 
     details.stakingToken = _tokenAddress;
   }
@@ -168,7 +171,8 @@ contract StakingPool {
     require(
       state == State.Operating ||
         state == State.Closed ||
-        state == State.OperatingStopped
+        state == State.OperatingStopped,
+      "Pool is not in Operating, Closed, or OperatingStopped state"
     );
 
     RewardSchedules.push(
@@ -272,12 +276,16 @@ contract StakingPool {
       "Invalid state for staking"
     );
 
-    // TODO
-    // - 최소 staking 가격 체크
-    // require(
-    //   _amount >= details.minStakePrice,
-    //   "Amount is less than the minimum stake amount"
-    // );
+    // 토큰 단위로 최소 스테이킹 금액을 계산
+    uint256 minStakeAmountInTokens = (details.minStakePrice *
+      decimal *
+      TOKEN_PRICE_SCALEUP) / currentScaledTokenPrice;
+
+    // 최소 스테이킹 금액 이상인지 확인
+    require(
+      _amount >= minStakeAmountInTokens,
+      "Amount is less than the minimum stake amount"
+    );
 
     IERC20(details.stakingToken).transferFrom(
       msg.sender,
@@ -341,7 +349,8 @@ contract StakingPool {
     require(
       state == State.Operating ||
         state == State.Closed ||
-        state == State.OperatingStopped
+        state == State.OperatingStopped,
+      "Invalid state for claiming rewards"
     );
 
     require(
@@ -370,7 +379,8 @@ contract StakingPool {
       state == State.FundraisingStopped ||
         state == State.Failed ||
         state == State.OperatingStopped ||
-        state == State.Closed
+        state == State.Closed,
+      "Invalid state for withdrawing principal"
     );
 
     StakingRecord[] storage records = stakingRecords[msg.sender];
@@ -457,7 +467,7 @@ contract StakingPool {
   function getPendingRewardTokens(
     address _staker
   ) public view returns (uint256) {
-    require(state == State.Operating);
+    require(state == State.Operating, "Invalid state for viewing rewards");
 
     // 보상 조회 로직
     uint256 totalReward = 0;
@@ -475,7 +485,7 @@ contract StakingPool {
   function viewAccumulatedRewards(
     address _staker
   ) public view returns (uint256) {
-    require(state == State.Operating);
+    require(state == State.Operating, "Invalid state for viewing rewards");
 
     // 누적 보상 조회 로직
     uint256 totalReward = 0;
@@ -490,7 +500,7 @@ contract StakingPool {
 
   // 전체 보상 요청
   function requestRewards() public {
-    require(state == State.Operating);
+    require(state == State.Operating, "Invalid state for requesting rewards");
 
     // 보상 요청 로직
     StakingRecord[] storage records = stakingRecords[msg.sender];

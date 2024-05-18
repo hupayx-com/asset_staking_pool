@@ -80,6 +80,54 @@ describe("Staking", function () {
     expect(stakeRecord.dailyInterest).to.equal(ethers.parseEther("1"));
   });
 
+  it("최소 스테이킹 금액 이상 일때 스테이킹이 성공한다.", async function () {
+    const { stakingPool, suffle, staker_1, owner } =
+      await deployStakingPoolFixture();
+
+    await stakingPool.connect(owner).setMinStakePrice(365);
+
+    // staking 은 모금/운영 시에만 가능
+    await stakingPool.connect(owner).startFundraising();
+
+    await stakingPool.connect(owner).updateScaledTokenPrice(1000000);
+
+    const STAKING_AMOUNT_ETHER_364 = "364";
+    await suffle
+      .connect(staker_1)
+      .approve(
+        stakingPool.getAddress(),
+        ethers.parseEther(STAKING_AMOUNT_ETHER_364)
+      );
+    await expect(
+      stakingPool
+        .connect(staker_1)
+        .stake(ethers.parseEther(STAKING_AMOUNT_ETHER_364))
+    ).to.be.revertedWith("Amount is less than the minimum stake amount");
+
+    const STAKING_AMOUNT_ETHER_365 = "365";
+    await suffle
+      .connect(staker_1)
+      .approve(
+        stakingPool.getAddress(),
+        ethers.parseEther(STAKING_AMOUNT_ETHER_365)
+      );
+    await stakingPool
+      .connect(staker_1)
+      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER_365));
+
+    const stakeRecord = await stakingPool.stakingRecords(
+      await staker_1.getAddress(),
+      0
+    );
+    expect(stakeRecord.amountStaked).to.equal(
+      ethers.parseEther(STAKING_AMOUNT_ETHER_365)
+    );
+    expect(stakeRecord.receivedRewardToken).to.equal(0);
+    expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
+    expect(stakeRecord.scaledTokenPrice).to.equal(1000000);
+    expect(stakeRecord.dailyInterest).to.equal(ethers.parseEther("1"));
+  });
+
   it("2 명의 사용자가 각각 토큰을 스테이킹 한다.", async function () {
     const { stakingPool, suffle, staker_1, owner } =
       await deployStakingPoolFixture();
