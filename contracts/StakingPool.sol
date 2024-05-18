@@ -165,6 +165,12 @@ contract StakingPool {
     uint256 _endDate
   ) external onlyAdmin {
     require(_startDate < _endDate, "Start date must be before end date");
+    require(
+      state == State.Operating ||
+        state == State.Closed ||
+        state == State.OperatingStopped
+    );
+
     RewardSchedules.push(
       RewardSchedule({
         scaledTokenPriceAtPayout: _scaledTokenPriceAtPayout,
