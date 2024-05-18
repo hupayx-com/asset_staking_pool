@@ -26,7 +26,7 @@ describe("Staking", function () {
     suffle = (await suffleFactory.deploy()) as Suffle;
 
     await stakingPool.setStakingToken(suffle.getAddress());
-    await stakingPool.setAnnualScaledInterestRate(100); // 연 이율 1%
+    await stakingPool.setScaledAnnualInterestRate(100); // 연 이율 1%
     await stakingPool.connect(owner).updateScaledTokenPrice(1000000);
 
     // faucet for staking
@@ -75,7 +75,7 @@ describe("Staking", function () {
       ethers.parseEther(STAKING_AMOUNT_ETHER)
     );
     expect(stakeRecord.receivedRewardToken).to.equal(0);
-    expect(stakeRecord.nextPendingRewardScheduleIndex).to.equal(0);
+    expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord.scaledTokenPrice).to.equal(1000000);
     expect(stakeRecord.dailyInterest).to.equal(ethers.parseEther("1"));
   });
@@ -120,7 +120,7 @@ describe("Staking", function () {
       ethers.parseEther(STAKING_AMOUNT_ETHER)
     );
     expect(stakeRecord_1.receivedRewardToken).to.equal(0);
-    expect(stakeRecord_1.nextPendingRewardScheduleIndex).to.equal(0);
+    expect(stakeRecord_1.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord_1.scaledTokenPrice).to.equal(1000000);
     expect(stakeRecord_1.dailyInterest).to.equal(ethers.parseEther("1"));
 
@@ -132,7 +132,7 @@ describe("Staking", function () {
       ethers.parseEther(STAKING_AMOUNT_ETHER_2)
     );
     expect(stakeRecord_2.receivedRewardToken).to.equal(0);
-    expect(stakeRecord_2.nextPendingRewardScheduleIndex).to.equal(0);
+    expect(stakeRecord_2.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord_2.scaledTokenPrice).to.equal(5000000);
     expect(stakeRecord_2.dailyInterest).to.equal(ethers.parseEther("10"));
   });
@@ -177,7 +177,7 @@ describe("Staking", function () {
       ethers.parseEther(STAKING_AMOUNT_ETHER)
     );
     expect(stakeRecord_1.receivedRewardToken).to.equal(0);
-    expect(stakeRecord_1.nextPendingRewardScheduleIndex).to.equal(0);
+    expect(stakeRecord_1.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord_1.scaledTokenPrice).to.equal(1000000);
     expect(stakeRecord_1.dailyInterest).to.equal(ethers.parseEther("1"));
 
@@ -189,7 +189,7 @@ describe("Staking", function () {
       ethers.parseEther(STAKING_AMOUNT_ETHER_2)
     );
     expect(stakeRecord_2.receivedRewardToken).to.equal(0);
-    expect(stakeRecord_2.nextPendingRewardScheduleIndex).to.equal(0);
+    expect(stakeRecord_2.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord_2.scaledTokenPrice).to.equal(5000000);
     expect(stakeRecord_2.dailyInterest).to.equal(ethers.parseEther("10"));
   });

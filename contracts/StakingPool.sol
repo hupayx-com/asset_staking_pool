@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 // Uncomment this line to use console.log
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 interface IERC20 {
   function transferFrom(
@@ -19,21 +19,24 @@ contract StakingPool {
   // 관리자 주소
   address public admin;
 
-  // 소수점 계산을 위해 SFL 가격 x1,000,000 scaleUp (ex. 2024년 4월27일 SFL 가격: $0.002718)
+  // 소수점 계산을 위해 Token 가격 x1,000,000 scaleUp (ex. 2024년 4월27일 SFL 가격: $0.002718)
   uint256 public constant TOKEN_PRICE_SCALEUP = 1e6;
   // 소수점 계산을 위해 이자을 x100 scaleUp (ex. 이자율: 0.05 %)
-  uint256 public constant INTEREST_RATE_SCALEUP = 100;
+  uint256 public constant ANNUAL_INTEREST_RATE_SCALEUP = 100;
 
-  // 실시간 SFL 가격을 반영하기 위해 외부에서 주기적으로 업데이트 필요
+  // 실시간 Token 가격을 반영하기 위해 외부에서 주기적으로 업데이트 필요
+  // staking 시 현재 값을 적용하여 연이자를 계산
   uint256 public currentScaledTokenPrice = 0;
 
   // staking pool 상태
   enum State {
-    Waiting, // 대기
-    Fundraising, // 모금
-    Operating, // 운영
+    Waiting, // 대기 (-> 모금)
+    Fundraising, // 모금 (-> 운영/잠김/중지/실패)
+    Operating, // 운영 (-> 종료/중지)
     Closed, // 종료
-    Stopped // 중지
+    Locked, // 잠김 (-> 운영)
+    Stopped, // 중지
+    Failed // 실패
   }
   State public state;
 
@@ -42,7 +45,7 @@ contract StakingPool {
     string name; // 이름
     string description; // 설명
     uint256 minStakePrice; // 최소 스테이킹 금액
-    uint256 annualScaledInterestRate; // 연 이자율
+    uint256 scaledAnnualInterestRate; // 연 이자율
     uint256 minFundraisingPrice; // 최소 모금 금액
     uint256 maxFundraisingPrice; // 최대 모금 금액
     address stakingToken; // staking token address
@@ -54,7 +57,7 @@ contract StakingPool {
     uint256 amountStaked; // staking 수량
     uint256 stakeTimestamp; // staking 시점
     uint256 receivedRewardToken; // 받은 보상
-    uint256 nextPendingRewardScheduleIndex; // 보상 스케줄 목록에서 받을 보상의 첫번째 index
+    uint256 pendingRewardScheduleIndex; // 보상 스케줄 목록에서 받을 보상들 중 첫번째 index
     uint256 scaledTokenPrice; // staking 시점의 토큰 가격
     uint256 dailyInterest; // 일 이자
   }
@@ -63,7 +66,7 @@ contract StakingPool {
 
   // 보상 스케줄
   struct RewardSchedule {
-    uint256 scaledTokenPriceAtPayout; // 보상 시 적용될 SFL 토큰 가격
+    uint256 scaledTokenPriceAtPayout; // 보상 시 적용될 토큰 가격
     uint256 startDate; // 보상 시작 시점(Unix time)
     uint256 endDate; // 보상 종료 시점(Unix time)
   }
@@ -75,11 +78,13 @@ contract StakingPool {
   // 이벤트 정의
   event Staked(address indexed user, uint256 amount);
   event RewardClaimed(address indexed user, uint256 reward);
-  event FundraisingStarted();
-  event FundraisingStopped();
-  event OperatingStarted();
-  event OperatingStopped();
-  event PoolClosed();
+
+  event FundraisingStarted(address indexed self);
+  event OperatingStarted(address indexed self);
+  event PoolClosed(address indexed self);
+  event PoolLocked(address indexed self);
+  event PoolStopped(address indexed self);
+  event PoolFailed(address indexed self);
 
   constructor() {
     admin = msg.sender;
@@ -89,11 +94,6 @@ contract StakingPool {
   modifier onlyAdmin() {
     require(msg.sender == admin, "Not an admin");
     _;
-  }
-
-  // 실시간 Token(SFL) 가격을 외부에서 주기적으로 업데이트 한다.
-  function updateScaledTokenPrice(uint256 _price) external onlyAdmin {
-    currentScaledTokenPrice = _price;
   }
 
   ///////////////////////
@@ -114,34 +114,34 @@ contract StakingPool {
     details.description = _description;
   }
 
-  // Pool 설정 관련 함수들 (모금 대기 상태에서만 설정 가능)
-
   // 최소 스테이킹 금액 설정
-  function setMinStakeAmount(uint256 _amount) public onlyAdmin {
+  function setMinStakePrice(uint256 _price) public onlyAdmin {
     require(state == State.Waiting);
 
-    details.minStakePrice = _amount;
+    details.minStakePrice = _price;
   }
 
   // 연 이자율 설정
-  function setAnnualScaledInterestRate(uint256 _interestRate) public onlyAdmin {
+  function setScaledAnnualInterestRate(
+    uint256 _scaledInterestRate
+  ) public onlyAdmin {
     require(state == State.Waiting);
 
-    details.annualScaledInterestRate = _interestRate;
+    details.scaledAnnualInterestRate = _scaledInterestRate;
   }
 
   // 최소 모금 금액 설정
-  function setMinFundraisingAmount(uint256 _amount) public onlyAdmin {
+  function setMinFundraisingPrice(uint256 _price) public onlyAdmin {
     require(state == State.Waiting);
 
-    details.minFundraisingPrice = _amount;
+    details.minFundraisingPrice = _price;
   }
 
   // 최대 모금 금액 설정
-  function setMaxFundraisingAmount(uint256 _amount) public onlyAdmin {
+  function setMaxFundraisingPrice(uint256 _price) public onlyAdmin {
     require(state == State.Waiting);
 
-    details.maxFundraisingPrice = _amount;
+    details.maxFundraisingPrice = _price;
   }
 
   // 스테이킹 토큰 주소 설정
@@ -149,6 +149,11 @@ contract StakingPool {
     require(state == State.Waiting);
 
     details.stakingToken = _tokenAddress;
+  }
+
+  // 실시간 Token 가격을 외부에서 주기적으로 업데이트 한다.
+  function updateScaledTokenPrice(uint256 _price) external onlyAdmin {
+    currentScaledTokenPrice = _price;
   }
 
   // 보상 스케줄을 추가한다.
@@ -173,36 +178,68 @@ contract StakingPool {
 
   // 모금 시작
   function startFundraising() public onlyAdmin {
-    require(state == State.Waiting);
+    require(
+      state == State.Waiting,
+      "Pool must be in Waiting state to start fundraising"
+    );
 
-    state = State.Fundraising; // 상태를 '모금 기간'으로 변경
-    emit FundraisingStarted();
+    state = State.Fundraising;
+    emit FundraisingStarted(address(this));
   }
 
   // 운영 시작
   function startOperating() public onlyAdmin {
-    require(state == State.Fundraising);
+    require(
+      state == State.Fundraising || state == State.Locked,
+      "Pool must be in Fundraising or Locked state to start operating"
+    );
 
-    // 상태를 '운영 기간'으로 변경하는 로직
     state = State.Operating;
-    emit OperatingStarted();
+    emit OperatingStarted(address(this));
   }
 
   // Pool 종료
   function closePool() public onlyAdmin {
-    require(state == State.Operating);
+    require(
+      state == State.Operating,
+      "Pool must be in Operating state to be closed"
+    );
 
-    // 스테이킹 풀을 종료하는 로직
     state = State.Closed;
-    emit PoolClosed();
+    emit PoolClosed(address(this));
+  }
+
+  // 잠김
+  function lockPool() public onlyAdmin {
+    require(
+      state == State.Fundraising,
+      "Pool must be in Fundraising state to be locked"
+    );
+
+    state = State.Locked;
+    emit PoolLocked(address(this));
   }
 
   // 중지
-  function stopFundraising() public onlyAdmin {
-    require(state == State.Fundraising);
+  function stopPool() public onlyAdmin {
+    require(
+      state == State.Fundraising || state == State.Operating,
+      "Pool must be in Fundraising or Operating state to be stopped"
+    );
 
     state = State.Stopped;
-    emit FundraisingStopped();
+    emit PoolStopped(address(this));
+  }
+
+  // 실패
+  function failPool() public onlyAdmin {
+    require(
+      state == State.Fundraising,
+      "Pool must be in Fundraising state to be marked as failed"
+    );
+
+    state = State.Failed;
+    emit PoolFailed(address(this));
   }
 
   //////////////
@@ -230,17 +267,17 @@ contract StakingPool {
     );
 
     uint256 dailyInterest = ((_amount * currentScaledTokenPrice) *
-      details.annualScaledInterestRate) /
+      details.scaledAnnualInterestRate) /
       365 /* 1 year */ /
       TOKEN_PRICE_SCALEUP /
-      INTEREST_RATE_SCALEUP;
+      ANNUAL_INTEREST_RATE_SCALEUP;
 
     stakingRecords[msg.sender].push(
       StakingRecord({
         amountStaked: _amount,
         stakeTimestamp: block.timestamp,
         receivedRewardToken: 0,
-        nextPendingRewardScheduleIndex: 0,
+        pendingRewardScheduleIndex: 0,
         scaledTokenPrice: currentScaledTokenPrice,
         dailyInterest: dailyInterest
       })
@@ -269,10 +306,10 @@ contract StakingPool {
       record.amountStaked -= _amount;
 
       uint256 dailyInterest = ((record.amountStaked * record.scaledTokenPrice) *
-        details.annualScaledInterestRate) /
+        details.scaledAnnualInterestRate) /
         365 /* 1 year */ /
         TOKEN_PRICE_SCALEUP /
-        INTEREST_RATE_SCALEUP;
+        ANNUAL_INTEREST_RATE_SCALEUP;
 
       record.dailyInterest = dailyInterest;
     }
@@ -289,10 +326,10 @@ contract StakingPool {
 
     StakingRecord storage userStake = stakingRecords[_user][_stakeIndex];
     uint256 reward = 0;
-    uint256 nextIndex = userStake.nextPendingRewardScheduleIndex;
+    uint256 nextIndex = userStake.pendingRewardScheduleIndex;
 
     for (
-      uint256 i = userStake.nextPendingRewardScheduleIndex;
+      uint256 i = userStake.pendingRewardScheduleIndex;
       i < RewardSchedules.length;
       i++
     ) {
@@ -353,7 +390,7 @@ contract StakingPool {
 
     StakingRecord storage userStake = stakingRecords[msg.sender][_stakeIndex];
     userStake.receivedRewardToken += reward;
-    userStake.nextPendingRewardScheduleIndex = nextIndex;
+    userStake.pendingRewardScheduleIndex = nextIndex;
 
     IERC20(details.stakingToken).transfer(msg.sender, reward);
 

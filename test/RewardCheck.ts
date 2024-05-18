@@ -29,7 +29,7 @@ describe("RewardCheck", function () {
     suffle = (await suffleFactory.deploy()) as Suffle;
 
     await stakingPool.setStakingToken(suffle.getAddress());
-    await stakingPool.setAnnualScaledInterestRate(100); // 연 이율 1%
+    await stakingPool.setScaledAnnualInterestRate(100); // 연 이율 1%
     await stakingPool.connect(owner).updateScaledTokenPrice(1000000);
 
     // faucet for staking
@@ -93,7 +93,7 @@ describe("RewardCheck", function () {
       0
     );
     expect(stakeRecord.receivedRewardToken).to.equal(0);
-    expect(stakeRecord.nextPendingRewardScheduleIndex).to.equal(0);
+    expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
   });
 
   it("모든 보상 기간 후 전체 보상을 확인한다.(총 보상 횟수: 1)", async function () {
@@ -141,7 +141,7 @@ describe("RewardCheck", function () {
       0
     );
     expect(stakeRecord.receivedRewardToken).to.equal(0);
-    expect(stakeRecord.nextPendingRewardScheduleIndex).to.equal(0);
+    expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
   });
 
   it("모든 보상 기간 후 전체 보상을 확인한다.(총 보상 횟수: 2)", async function () {
@@ -195,7 +195,7 @@ describe("RewardCheck", function () {
       0
     );
     expect(stakeRecord.receivedRewardToken).to.equal(0);
-    expect(stakeRecord.nextPendingRewardScheduleIndex).to.equal(0);
+    expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
   });
 
   it("1 번째 보상 기간 내 보상이 없음을 확인한다.(총 보상 횟수: 2)", async function () {
@@ -249,7 +249,7 @@ describe("RewardCheck", function () {
       0
     );
     expect(stakeRecord.receivedRewardToken).to.equal(0);
-    expect(stakeRecord.nextPendingRewardScheduleIndex).to.equal(0);
+    expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
   });
 
   it("2 번째 보상 기간 내 1 번째 보상만을 확인한다.(총 보상 횟수: 2)", async function () {
@@ -303,6 +303,6 @@ describe("RewardCheck", function () {
       0
     );
     expect(stakeRecord.receivedRewardToken).to.equal(0);
-    expect(stakeRecord.nextPendingRewardScheduleIndex).to.equal(0);
+    expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
   });
 });

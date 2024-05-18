@@ -29,7 +29,7 @@ describe("RewardClaim", function () {
     suffle = (await suffleFactory.deploy()) as Suffle;
 
     await stakingPool.setStakingToken(suffle.getAddress());
-    await stakingPool.setAnnualScaledInterestRate(100); // 연 이율 1%
+    await stakingPool.setScaledAnnualInterestRate(100); // 연 이율 1%
     await stakingPool.connect(owner).updateScaledTokenPrice(1000000);
 
     // faucet for staking
@@ -101,7 +101,7 @@ describe("RewardClaim", function () {
       0
     );
     expect(stakeRecord.receivedRewardToken).to.equal(ethers.parseEther("5"));
-    expect(stakeRecord.nextPendingRewardScheduleIndex).to.equal(1);
+    expect(stakeRecord.pendingRewardScheduleIndex).to.equal(1);
   });
 
   it("모든 보상 기간이 지난 후 전체 보상을 요청한다.(총 보상 횟수: 2)", async function () {
@@ -163,7 +163,7 @@ describe("RewardClaim", function () {
       0
     );
     expect(stakeRecord.receivedRewardToken).to.equal(ethers.parseEther("7"));
-    expect(stakeRecord.nextPendingRewardScheduleIndex).to.equal(2);
+    expect(stakeRecord.pendingRewardScheduleIndex).to.equal(2);
   });
 
   it("1 번째 보상 기간 내 보상 요청 시 보상은 없다.(총 보상 횟수: 2)", async function () {
@@ -232,7 +232,7 @@ describe("RewardClaim", function () {
       0
     );
     expect(stakeRecord.receivedRewardToken).to.equal(ethers.parseEther("0"));
-    expect(stakeRecord.nextPendingRewardScheduleIndex).to.equal(0);
+    expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
   });
 
   it("2 번째 보상 기간 내 보상 요청 시 1 번째 보상만을 수령한다.(총 보상 횟수: 2)", async function () {
@@ -294,7 +294,7 @@ describe("RewardClaim", function () {
       0
     );
     expect(stakeRecord.receivedRewardToken).to.equal(ethers.parseEther("5"));
-    expect(stakeRecord.nextPendingRewardScheduleIndex).to.equal(1);
+    expect(stakeRecord.pendingRewardScheduleIndex).to.equal(1);
   });
 
   it("2 번째 보상 기간 내 보상 요청 후 3 번째 보상 기간 내 보상을 요청한다.(총 보상 횟수: 3)", async function () {
@@ -365,7 +365,7 @@ describe("RewardClaim", function () {
       0
     );
     expect(stakeRecord.receivedRewardToken).to.equal(ethers.parseEther("5"));
-    expect(stakeRecord.nextPendingRewardScheduleIndex).to.equal(1);
+    expect(stakeRecord.pendingRewardScheduleIndex).to.equal(1);
 
     ///////////////////
     // 2 번째 보상 요청 //
@@ -395,7 +395,7 @@ describe("RewardClaim", function () {
     );
     // 5(1th) + 2(2th)
     expect(stakeRecord.receivedRewardToken).to.equal(ethers.parseEther("7"));
-    expect(stakeRecord.nextPendingRewardScheduleIndex).to.equal(2);
+    expect(stakeRecord.pendingRewardScheduleIndex).to.equal(2);
   });
 
   it("1 번째 보상 기간내에 staking 하고 2 번째 보상 기간내에 보상을 요청한다.(총 보상 횟수: 2)", async function () {
@@ -461,6 +461,6 @@ describe("RewardClaim", function () {
       0
     );
     expect(stakeRecord.receivedRewardToken).to.equal(ethers.parseEther("2.5"));
-    expect(stakeRecord.nextPendingRewardScheduleIndex).to.equal(1);
+    expect(stakeRecord.pendingRewardScheduleIndex).to.equal(1);
   });
 });
