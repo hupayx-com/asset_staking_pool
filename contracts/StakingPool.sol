@@ -31,13 +31,13 @@ contract StakingPool {
   // staking pool 상태
   enum State {
     Waiting, // 대기 (-> 모금)
-    Fundraising, // 모금 (-> 운영/잠김/중지/실패)
-    Operating, // 운영 (-> 종료/중지)
-    Closed, // 종료
-    Locked, // 잠김 (-> 운영)
+    Fundraising, // 모금 (-> 운영/잠김/모금 중지/실패)
+    Operating, // 운영 (-> 종료/운영 중지)
+    Closed, // 운영 종료
+    Locked, // 모금 잠김 (-> 운영)
     FundraisingStopped, // 모금 중지
     OperatingStopped, // 운영 중지
-    Failed // 실패
+    Failed // 모금 실패
   }
   State public state;
 
@@ -330,7 +330,7 @@ contract StakingPool {
     IERC20(details.stakingToken).transfer(msg.sender, _amount);
   }
 
-  // 보상 요청
+  // 보상 요청 (운영/운영종료/운영중지 인 경우)
   function claimRewardToken(uint256 _stakeIndex) public {
     require(
       state == State.Operating ||
@@ -358,13 +358,26 @@ contract StakingPool {
     emit RewardClaimed(msg.sender, reward);
   }
 
-  // 모금 실패/중지/종료 시 자금 회수
-  function withdrawFailedFundraising() public {
-    require(state == State.Fundraising);
+  // 원금 회수 (모금중지/모금실패/운영중지/운영종료 인 경우)
+  function withdrawPrincipal() public {
+    require(
+      state == State.FundraisingStopped ||
+        state == State.Failed ||
+        state == State.OperatingStopped ||
+        state == State.Closed
+    );
 
-    // 모금 실패 시 자금 회수 로직
     StakingRecord[] storage records = stakingRecords[msg.sender];
     uint256 totalAmount = 0;
+
+    // 모든 보상이 청구되었는지 확인
+    for (uint256 i = 0; i < records.length; i++) {
+      (uint256 reward, ) = getPendingRewardToken(msg.sender, i);
+      require(
+        reward == 0,
+        "Please claim all rewards before withdrawing principal"
+      );
+    }
 
     for (uint256 i = 0; i < records.length; i++) {
       totalAmount += records[i].amountStaked;
