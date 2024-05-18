@@ -501,8 +501,8 @@ contract StakingPool {
     return (reward, nextIndex);
   }
 
-  // 사용자의 전체 보상 조회
-  function getPendingRewardTokens(
+  // 사용자의 전체 받을 보상 조회
+  function getTotalPendingRewardToken(
     address _staker
   ) public view returns (uint256) {
     require(state == State.Operating, "Invalid state for viewing rewards");
@@ -519,8 +519,8 @@ contract StakingPool {
     return totalReward;
   }
 
-  // 전체 누적 보상 조회
-  function viewAccumulatedRewards(
+  // 사용자의 전체 받은 보상 조회
+  function getTotalReceivedRewardToken(
     address _staker
   ) public view returns (uint256) {
     require(state == State.Operating, "Invalid state for viewing rewards");
@@ -536,7 +536,7 @@ contract StakingPool {
     return totalReward;
   }
 
-  // 전체 보상 요청
+  // 사용자의 전체 보상 요청
   function requestRewards() public {
     require(state == State.Operating, "Invalid state for requesting rewards");
 
@@ -548,7 +548,7 @@ contract StakingPool {
     }
   }
 
-  // function to get length of the staking records array
+  // 사용자의 스테이킹 개수를 얻어온다.
   function getStakingRecordLength(
     address _user
   ) external view returns (uint256) {

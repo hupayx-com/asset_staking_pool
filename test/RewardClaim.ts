@@ -464,4 +464,62 @@ describe("RewardClaim", function () {
     expect(stakeRecord.receivedRewardToken).to.equal(ethers.parseEther("2.5"));
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(1);
   });
+
+  it("한 사용자가 2 번 스테이킹 -> 2 번의 보상 스케줄 경과 -> 모든 보상 요청 -> 총 받은 보상을 확인한다.", async function () {
+    const { stakingPool, suffle, staker_1, owner } =
+      await deployStakingPoolFixture();
+
+    // 보상은 staking pool 의 상태가 "운영" 이후 부터 가능하다.
+    await stakingPool.connect(owner).startFundraising();
+    await stakingPool.connect(owner).startOperating();
+
+    await stakingPool.connect(owner).updateScaledTokenPrice(1000000);
+
+    const STAKING_AMOUNT_1 = "365";
+    const STAKING_AMOUNT_2 = "730";
+
+    await suffle
+      .connect(staker_1)
+      .approve(stakingPool.getAddress(), ethers.parseEther(STAKING_AMOUNT_1));
+    await stakingPool
+      .connect(staker_1)
+      .stake(ethers.parseEther(STAKING_AMOUNT_1));
+
+    await suffle
+      .connect(staker_1)
+      .approve(stakingPool.getAddress(), ethers.parseEther(STAKING_AMOUNT_2));
+    await stakingPool
+      .connect(staker_1)
+      .stake(ethers.parseEther(STAKING_AMOUNT_2));
+
+    const currentTime = await getCurrentBlockchainTime();
+
+    await stakingPool.addRewardSchedule(
+      1000000,
+      currentTime + SECONDS_IN_A_DAY * 1,
+      currentTime + SECONDS_IN_A_DAY * 11 // 10일 후
+    );
+    await stakingPool.addRewardSchedule(
+      1000000,
+      currentTime + SECONDS_IN_A_DAY * 11,
+      currentTime + SECONDS_IN_A_DAY * 21 // 10일 후
+    );
+
+    // 시간을 앞당김
+    await ethers.provider.send("evm_increaseTime", [SECONDS_IN_A_DAY * 25]);
+    await ethers.provider.send("evm_mine");
+
+    // 스테이킹의 보상 청구
+    await stakingPool.connect(staker_1).claimRewardToken(0);
+    await stakingPool.connect(staker_1).claimRewardToken(1);
+
+    const totalReceivedRewards = await stakingPool.getTotalReceivedRewardToken(
+      await staker_1.getAddress()
+    );
+
+    // 사용자가 받은 보상
+    // 첫 번째 스테이킹(365): 20
+    // 두 번째 스테이킹(730): 40
+    expect(totalReceivedRewards).to.be.equal(ethers.parseEther("60"));
+  });
 });
