@@ -441,6 +441,10 @@ contract StakingPool {
   // 사용자 조회 //
   //////////////
 
+  function getPoolDetails() external view returns (Details memory) {
+    return details;
+  }
+
   // 보상 확인
   function getPendingRewardToken(
     address _user,
