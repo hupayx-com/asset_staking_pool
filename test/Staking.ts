@@ -67,7 +67,7 @@ describe("Staking", function () {
       );
     await stakingPool
       .connect(staker_1)
-      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER));
+      .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER));
 
     const stakeRecord = await stakingPool.stakingRecords(
       await staker_1.getAddress(),
@@ -76,7 +76,7 @@ describe("Staking", function () {
     expect(stakeRecord.amountStaked).to.equal(
       ethers.parseEther(STAKING_AMOUNT_ETHER)
     );
-    expect(stakeRecord.receivedRewardToken).to.equal(0);
+    expect(stakeRecord.claimedRewards).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord.scaledTokenPrice).to.equal(1000000);
     expect(stakeRecord.dailyInterest).to.equal(ethers.parseEther("1"));
@@ -103,8 +103,8 @@ describe("Staking", function () {
     await expect(
       stakingPool
         .connect(staker_1)
-        .stake(ethers.parseEther(STAKING_AMOUNT_ETHER_364))
-    ).to.be.revertedWith("Amount is less than the minimum stake amount");
+        .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER_364))
+    ).to.be.revertedWith("Amount is less than the minimum stakeToken amount");
 
     const STAKING_AMOUNT_ETHER_365 = "365";
     await suffle
@@ -115,7 +115,7 @@ describe("Staking", function () {
       );
     await stakingPool
       .connect(staker_1)
-      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER_365));
+      .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER_365));
   });
 
   it("풀의 전체 스테이킹 금액이 최대치를 넘을때 스테이킹은 실패한다.", async function () {
@@ -138,7 +138,7 @@ describe("Staking", function () {
       );
     await stakingPool
       .connect(staker_1)
-      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER_950));
+      .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER_950));
 
     const STAKING_AMOUNT_ETHER_364 = "51";
     await suffle
@@ -150,7 +150,7 @@ describe("Staking", function () {
     await expect(
       stakingPool
         .connect(staker_1)
-        .stake(ethers.parseEther(STAKING_AMOUNT_ETHER_364))
+        .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER_364))
     ).to.be.revertedWith("Amount exceeds the maximum fundraising amount");
   });
 
@@ -174,7 +174,7 @@ describe("Staking", function () {
       );
     await stakingPool
       .connect(staker_1)
-      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER_950));
+      .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER_950));
 
     const STAKING_AMOUNT_ETHER_364 = "50";
     await suffle
@@ -185,7 +185,7 @@ describe("Staking", function () {
       );
     await stakingPool
       .connect(staker_1)
-      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER_364));
+      .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER_364));
 
     const poolStatus = await stakingPool.state();
     expect(poolStatus).to.equal(PoolState.Locked);
@@ -209,7 +209,7 @@ describe("Staking", function () {
       );
     await stakingPool
       .connect(staker_1)
-      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER));
+      .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER));
 
     await stakingPool.connect(owner).updateScaledTokenPrice(5000000);
 
@@ -221,7 +221,7 @@ describe("Staking", function () {
       );
     await stakingPool
       .connect(staker_2)
-      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER_2));
+      .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER_2));
 
     const stakeRecord_1 = await stakingPool.stakingRecords(
       await staker_1.getAddress(),
@@ -230,7 +230,7 @@ describe("Staking", function () {
     expect(stakeRecord_1.amountStaked).to.equal(
       ethers.parseEther(STAKING_AMOUNT_ETHER)
     );
-    expect(stakeRecord_1.receivedRewardToken).to.equal(0);
+    expect(stakeRecord_1.claimedRewards).to.equal(0);
     expect(stakeRecord_1.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord_1.scaledTokenPrice).to.equal(1000000);
     expect(stakeRecord_1.dailyInterest).to.equal(ethers.parseEther("1"));
@@ -242,7 +242,7 @@ describe("Staking", function () {
     expect(stakeRecord_2.amountStaked).to.equal(
       ethers.parseEther(STAKING_AMOUNT_ETHER_2)
     );
-    expect(stakeRecord_2.receivedRewardToken).to.equal(0);
+    expect(stakeRecord_2.claimedRewards).to.equal(0);
     expect(stakeRecord_2.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord_2.scaledTokenPrice).to.equal(5000000);
     expect(stakeRecord_2.dailyInterest).to.equal(ethers.parseEther("10"));
@@ -266,7 +266,7 @@ describe("Staking", function () {
       );
     await stakingPool
       .connect(staker_1)
-      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER));
+      .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER));
 
     await stakingPool.connect(owner).updateScaledTokenPrice(5000000);
 
@@ -278,7 +278,7 @@ describe("Staking", function () {
       );
     await stakingPool
       .connect(staker_1)
-      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER_2));
+      .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER_2));
 
     const stakeRecord_1 = await stakingPool.stakingRecords(
       await staker_1.getAddress(),
@@ -287,7 +287,7 @@ describe("Staking", function () {
     expect(stakeRecord_1.amountStaked).to.equal(
       ethers.parseEther(STAKING_AMOUNT_ETHER)
     );
-    expect(stakeRecord_1.receivedRewardToken).to.equal(0);
+    expect(stakeRecord_1.claimedRewards).to.equal(0);
     expect(stakeRecord_1.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord_1.scaledTokenPrice).to.equal(1000000);
     expect(stakeRecord_1.dailyInterest).to.equal(ethers.parseEther("1"));
@@ -299,7 +299,7 @@ describe("Staking", function () {
     expect(stakeRecord_2.amountStaked).to.equal(
       ethers.parseEther(STAKING_AMOUNT_ETHER_2)
     );
-    expect(stakeRecord_2.receivedRewardToken).to.equal(0);
+    expect(stakeRecord_2.claimedRewards).to.equal(0);
     expect(stakeRecord_2.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord_2.scaledTokenPrice).to.equal(5000000);
     expect(stakeRecord_2.dailyInterest).to.equal(ethers.parseEther("10"));

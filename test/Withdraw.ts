@@ -73,9 +73,9 @@ describe("WithdrawPrincipal", function () {
       );
     await stakingPool
       .connect(staker_1)
-      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER));
+      .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER));
 
-    await stakingPool.connect(owner).stopPoolFundrasing();
+    await stakingPool.connect(owner).stopPoolFundraising();
 
     await stakingPool.connect(staker_1).withdrawPrincipal();
 
@@ -104,7 +104,7 @@ describe("WithdrawPrincipal", function () {
       );
     await stakingPool
       .connect(staker_1)
-      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER));
+      .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER));
 
     await stakingPool.connect(owner).failPool();
 
@@ -135,7 +135,7 @@ describe("WithdrawPrincipal", function () {
       );
     await stakingPool
       .connect(staker_1)
-      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER));
+      .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER));
 
     // 보상 스케줄 추가
     const currentTime = await getCurrentBlockchainTime();
@@ -194,7 +194,7 @@ describe("WithdrawPrincipal", function () {
       );
     await stakingPool
       .connect(staker_1)
-      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER));
+      .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER));
 
     // 보상 스케줄 추가
     const currentTime = await getCurrentBlockchainTime();

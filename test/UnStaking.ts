@@ -68,7 +68,7 @@ describe("UnStaking", function () {
       );
     await stakingPool
       .connect(staker_1)
-      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER_730));
+      .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER_730));
 
     await suffle
       .connect(staker_1)
@@ -78,7 +78,7 @@ describe("UnStaking", function () {
       );
     await stakingPool
       .connect(staker_1)
-      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER_365));
+      .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER_365));
 
     let stakeRecord = await stakingPool.stakingRecords(
       await staker_1.getAddress(),
@@ -87,16 +87,16 @@ describe("UnStaking", function () {
     expect(stakeRecord.amountStaked).to.equal(
       ethers.parseEther(STAKING_AMOUNT_ETHER_730)
     );
-    expect(stakeRecord.receivedRewardToken).to.equal(0);
+    expect(stakeRecord.claimedRewards).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord.scaledTokenPrice).to.equal(1000000);
     expect(stakeRecord.dailyInterest).to.equal(ethers.parseEther("2"));
 
     await stakingPool
       .connect(staker_1)
-      .unStake(0, ethers.parseEther(STAKING_AMOUNT_ETHER_730));
+      .unStakeToken(0, ethers.parseEther(STAKING_AMOUNT_ETHER_730));
 
-    const stakeLength = await stakingPool.getStakingRecordLength(
+    const stakeLength = await stakingPool.getStakingRecordCount(
       await staker_1.getAddress()
     );
     expect(stakeLength).to.equal(1);
@@ -108,7 +108,7 @@ describe("UnStaking", function () {
     expect(stakeRecord.amountStaked).to.equal(
       ethers.parseEther(STAKING_AMOUNT_ETHER_365)
     );
-    expect(stakeRecord.receivedRewardToken).to.equal(0);
+    expect(stakeRecord.claimedRewards).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord.scaledTokenPrice).to.equal(1000000);
     expect(stakeRecord.dailyInterest).to.equal(ethers.parseEther("1"));
@@ -132,7 +132,7 @@ describe("UnStaking", function () {
       );
     await stakingPool
       .connect(staker_1)
-      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER_730));
+      .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER_730));
 
     let stakeRecord = await stakingPool.stakingRecords(
       await staker_1.getAddress(),
@@ -141,7 +141,7 @@ describe("UnStaking", function () {
     expect(stakeRecord.amountStaked).to.equal(
       ethers.parseEther(STAKING_AMOUNT_ETHER_730)
     );
-    expect(stakeRecord.receivedRewardToken).to.equal(0);
+    expect(stakeRecord.claimedRewards).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord.scaledTokenPrice).to.equal(1000000);
     expect(stakeRecord.dailyInterest).to.equal(ethers.parseEther("2"));
@@ -150,9 +150,9 @@ describe("UnStaking", function () {
 
     await stakingPool
       .connect(staker_1)
-      .unStake(0, ethers.parseEther(STAKING_AMOUNT_ETHER_365));
+      .unStakeToken(0, ethers.parseEther(STAKING_AMOUNT_ETHER_365));
 
-    const stakeLength = await stakingPool.getStakingRecordLength(
+    const stakeLength = await stakingPool.getStakingRecordCount(
       await staker_1.getAddress()
     );
     expect(stakeLength).to.equal(1);
@@ -164,7 +164,7 @@ describe("UnStaking", function () {
     expect(stakeRecord.amountStaked).to.equal(
       ethers.parseEther(STAKING_AMOUNT_ETHER_365)
     );
-    expect(stakeRecord.receivedRewardToken).to.equal(0);
+    expect(stakeRecord.claimedRewards).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord.scaledTokenPrice).to.equal(1000000);
     expect(stakeRecord.dailyInterest).to.equal(ethers.parseEther("1"));
@@ -187,14 +187,14 @@ describe("UnStaking", function () {
       );
     await stakingPool
       .connect(staker_1)
-      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER_730));
+      .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER_730));
 
     await stakingPool.connect(owner).startOperating();
 
     await expect(
       stakingPool
         .connect(staker_1)
-        .unStake(0, ethers.parseEther(STAKING_AMOUNT_ETHER_730))
+        .unStakeToken(0, ethers.parseEther(STAKING_AMOUNT_ETHER_730))
     ).to.be.revertedWith("Unstaking is only allowed during fundraising");
   });
 
@@ -215,14 +215,14 @@ describe("UnStaking", function () {
       );
     await stakingPool
       .connect(staker_1)
-      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER_730));
+      .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER_730));
 
-    await stakingPool.connect(owner).stopPoolFundrasing();
+    await stakingPool.connect(owner).stopPoolFundraising();
 
     await expect(
       stakingPool
         .connect(staker_1)
-        .unStake(0, ethers.parseEther(STAKING_AMOUNT_ETHER_730))
+        .unStakeToken(0, ethers.parseEther(STAKING_AMOUNT_ETHER_730))
     ).to.be.revertedWith("Unstaking is only allowed during fundraising");
   });
 
@@ -244,14 +244,14 @@ describe("UnStaking", function () {
       );
     await stakingPool
       .connect(staker_1)
-      .stake(ethers.parseEther(STAKING_AMOUNT_ETHER_730));
+      .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER_730));
 
     await stakingPool.connect(owner).closePool();
 
     await expect(
       stakingPool
         .connect(staker_1)
-        .unStake(0, ethers.parseEther(STAKING_AMOUNT_ETHER_730))
+        .unStakeToken(0, ethers.parseEther(STAKING_AMOUNT_ETHER_730))
     ).to.be.revertedWith("Unstaking is only allowed during fundraising");
   });
 });

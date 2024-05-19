@@ -104,19 +104,19 @@ describe("StakingPool Admin Functions", function () {
   it("보상 스케줄 추가", async function () {
     const { stakingPool, owner } = await deployStakingPoolFixture();
 
-    const startDate = Math.floor(Date.now() / 1000); // 현재 시간 (초 단위)
-    const endDate = startDate + 30 * 24 * 60 * 60; // 30일 후
+    const start = Math.floor(Date.now() / 1000); // 현재 시간 (초 단위)
+    const end = start + 30 * 24 * 60 * 60; // 30일 후
 
     await stakingPool.connect(owner).startFundraising();
     await stakingPool.connect(owner).startOperating();
 
-    await expect(stakingPool.addRewardSchedule(1500000, startDate, endDate))
+    await expect(stakingPool.addRewardSchedule(1500000, start, end))
       .to.emit(stakingPool, "RewardScheduleAdded")
-      .withArgs(1500000, startDate, endDate);
+      .withArgs(1500000, start, end);
 
-    const rewardSchedule = await stakingPool.RewardSchedules(0);
+    const rewardSchedule = await stakingPool.rewardSchedules(0);
     expect(rewardSchedule.scaledTokenPriceAtPayout).to.equal(1500000);
-    expect(rewardSchedule.startDate).to.equal(startDate);
-    expect(rewardSchedule.endDate).to.equal(endDate);
+    expect(rewardSchedule.start).to.equal(start);
+    expect(rewardSchedule.end).to.equal(end);
   });
 });
