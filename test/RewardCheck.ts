@@ -29,8 +29,8 @@ describe("RewardCheck", function () {
     suffle = (await suffleFactory.deploy()) as Suffle;
 
     await stakingPool.setStakingToken(suffle.getAddress());
-    await stakingPool.setScaledAnnualInterestRate(100); // 연 이율 1%
-    await stakingPool.connect(owner).updateScaledTokenPrice(1000000);
+    await stakingPool.setAnnualInterestRateMultiplier(100); // 연 이율 1%
+    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000);
     await stakingPool.setMaxFundraisingPrice(10000);
 
     // faucet for staking
@@ -57,7 +57,7 @@ describe("RewardCheck", function () {
     await stakingPool.connect(owner).startFundraising();
     await stakingPool.connect(owner).startOperating();
 
-    await stakingPool.connect(owner).updateScaledTokenPrice(1000000);
+    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000);
 
     const STAKING_AMOUNT_ETHER = "365";
 
@@ -105,7 +105,7 @@ describe("RewardCheck", function () {
     await stakingPool.connect(owner).startFundraising();
     await stakingPool.connect(owner).startOperating();
 
-    await stakingPool.connect(owner).updateScaledTokenPrice(1000000);
+    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000);
 
     const STAKING_AMOUNT_ETHER = "365";
 
@@ -153,7 +153,7 @@ describe("RewardCheck", function () {
     await stakingPool.connect(owner).startFundraising();
     await stakingPool.connect(owner).startOperating();
 
-    await stakingPool.connect(owner).updateScaledTokenPrice(1000000);
+    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000);
 
     const STAKING_AMOUNT_ETHER = "365";
 
@@ -207,7 +207,7 @@ describe("RewardCheck", function () {
     await stakingPool.connect(owner).startFundraising();
     await stakingPool.connect(owner).startOperating();
 
-    await stakingPool.connect(owner).updateScaledTokenPrice(1000000);
+    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000);
 
     const STAKING_AMOUNT_ETHER = "365";
 
@@ -261,7 +261,7 @@ describe("RewardCheck", function () {
     await stakingPool.connect(owner).startFundraising();
     await stakingPool.connect(owner).startOperating();
 
-    await stakingPool.connect(owner).updateScaledTokenPrice(1000000);
+    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000);
 
     const STAKING_AMOUNT_ETHER = "365";
 
@@ -315,7 +315,7 @@ describe("RewardCheck", function () {
     await stakingPool.connect(owner).startFundraising();
     await stakingPool.connect(owner).startOperating();
 
-    await stakingPool.connect(owner).updateScaledTokenPrice(1000000);
+    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000);
 
     const STAKING_AMOUNT_ETHER_365 = "365";
     const STAKING_AMOUNT_ETHER_730 = "730";
@@ -357,9 +357,10 @@ describe("RewardCheck", function () {
     await ethers.provider.send("evm_increaseTime", [SECONDS_IN_A_DAY * 25]);
     await ethers.provider.send("evm_mine");
 
-    const totalPendingRewards = await stakingPool.getTotalPendingRewardToken(
-      await staker_1.getAddress()
-    );
+    const totalPendingRewards =
+      await stakingPool.calculateAllPendingRewardToken(
+        await staker_1.getAddress()
+      );
 
     // 7 + 14
     expect(totalPendingRewards).to.be.equal(ethers.parseEther("21"));

@@ -29,8 +29,8 @@ describe("RewardClaim", function () {
     suffle = (await suffleFactory.deploy()) as Suffle;
 
     await stakingPool.setStakingToken(suffle.getAddress());
-    await stakingPool.setScaledAnnualInterestRate(100); // 연 이율 1%
-    await stakingPool.connect(owner).updateScaledTokenPrice(1000000);
+    await stakingPool.setAnnualInterestRateMultiplier(100); // 연 이율 1%
+    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000);
     await stakingPool.setMaxFundraisingPrice(10000);
 
     // faucet for staking
@@ -57,7 +57,7 @@ describe("RewardClaim", function () {
     await stakingPool.connect(owner).startFundraising();
     await stakingPool.connect(owner).startOperating();
 
-    await stakingPool.connect(owner).updateScaledTokenPrice(1000000);
+    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000);
 
     const STAKING_AMOUNT_ETHER = "365";
 
@@ -113,7 +113,7 @@ describe("RewardClaim", function () {
     await stakingPool.connect(owner).startFundraising();
     await stakingPool.connect(owner).startOperating();
 
-    await stakingPool.connect(owner).updateScaledTokenPrice(1000000);
+    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000);
 
     const STAKING_AMOUNT_ETHER = "365";
 
@@ -175,7 +175,7 @@ describe("RewardClaim", function () {
     await stakingPool.connect(owner).startFundraising();
     await stakingPool.connect(owner).startOperating();
 
-    await stakingPool.connect(owner).updateScaledTokenPrice(1000000);
+    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000);
 
     const STAKING_AMOUNT_ETHER = "365";
 
@@ -244,7 +244,7 @@ describe("RewardClaim", function () {
     await stakingPool.connect(owner).startFundraising();
     await stakingPool.connect(owner).startOperating();
 
-    await stakingPool.connect(owner).updateScaledTokenPrice(1000000);
+    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000);
 
     const STAKING_AMOUNT_ETHER = "365";
 
@@ -306,7 +306,7 @@ describe("RewardClaim", function () {
     await stakingPool.connect(owner).startFundraising();
     await stakingPool.connect(owner).startOperating();
 
-    await stakingPool.connect(owner).updateScaledTokenPrice(1000000);
+    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000);
 
     const STAKING_AMOUNT_ETHER = "365";
 
@@ -407,7 +407,7 @@ describe("RewardClaim", function () {
     await stakingPool.connect(owner).startFundraising();
     await stakingPool.connect(owner).startOperating();
 
-    await stakingPool.connect(owner).updateScaledTokenPrice(1000000);
+    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000);
 
     const STAKING_AMOUNT_ETHER = "365";
 
@@ -473,7 +473,7 @@ describe("RewardClaim", function () {
     await stakingPool.connect(owner).startFundraising();
     await stakingPool.connect(owner).startOperating();
 
-    await stakingPool.connect(owner).updateScaledTokenPrice(1000000);
+    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000);
 
     const STAKING_AMOUNT_1 = "365";
     const STAKING_AMOUNT_2 = "730";
@@ -513,9 +513,10 @@ describe("RewardClaim", function () {
     await stakingPool.connect(staker_1).claimRewardToken(0);
     await stakingPool.connect(staker_1).claimRewardToken(1);
 
-    const totalReceivedRewards = await stakingPool.getTotalClaimedRewardToken(
-      await staker_1.getAddress()
-    );
+    const totalReceivedRewards =
+      await stakingPool.calculateAllClaimedRewardToken(
+        await staker_1.getAddress()
+      );
 
     // 사용자가 받은 보상
     // 첫 번째 스테이킹(365): 20

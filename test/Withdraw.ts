@@ -29,8 +29,8 @@ describe("WithdrawPrincipal", function () {
     suffle = (await suffleFactory.deploy()) as Suffle;
 
     await stakingPool.setStakingToken(await suffle.getAddress());
-    await stakingPool.setScaledAnnualInterestRate(100); // 연 이율 1%
-    await stakingPool.connect(owner).updateScaledTokenPrice(1000000);
+    await stakingPool.setAnnualInterestRateMultiplier(100); // 연 이율 1%
+    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000);
     await stakingPool.setMaxFundraisingPrice(10000);
 
     // faucet for staking

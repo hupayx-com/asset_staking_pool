@@ -57,10 +57,10 @@ describe("StakingPool Admin Functions", function () {
   it("연 이자율 설정", async function () {
     const { stakingPool, owner } = await deployStakingPoolFixture();
 
-    await stakingPool.setScaledAnnualInterestRate(5000);
+    await stakingPool.setAnnualInterestRateMultiplier(5000);
 
     const details = await stakingPool.getPoolDetails();
-    expect(details.scaledAnnualInterestRate).to.equal(5000);
+    expect(details.annualInterestRateMultiplier).to.equal(5000);
   });
 
   it("최소 모금 금액 설정", async function () {
@@ -95,9 +95,9 @@ describe("StakingPool Admin Functions", function () {
   it("실시간 토큰 가격 업데이트", async function () {
     const { stakingPool, owner } = await deployStakingPoolFixture();
 
-    await stakingPool.connect(owner).updateScaledTokenPrice(1500000);
+    await stakingPool.connect(owner).updateMultipliedTokenPrice(1500000);
 
-    const currentPrice = await stakingPool.currentScaledTokenPrice();
+    const currentPrice = await stakingPool.currentMultipliedTokenPrice();
     expect(currentPrice).to.equal(1500000);
   });
 
@@ -115,7 +115,7 @@ describe("StakingPool Admin Functions", function () {
       .withArgs(1500000, start, end);
 
     const rewardSchedule = await stakingPool.rewardSchedules(0);
-    expect(rewardSchedule.scaledTokenPriceAtPayout).to.equal(1500000);
+    expect(rewardSchedule.multipliedTokenPriceAtPayout).to.equal(1500000);
     expect(rewardSchedule.start).to.equal(start);
     expect(rewardSchedule.end).to.equal(end);
   });
