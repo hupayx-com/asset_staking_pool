@@ -1,7 +1,7 @@
 import { ethers, network } from "hardhat";
 import { expect } from "chai";
 import { Signer } from "ethers";
-import { StakingPool } from "../typechain-types/index";
+import { StakingPool, StakingPoolFactory } from "../typechain-types/index";
 import { PoolState } from "./util";
 
 describe("StakingPool Admin Functions", function () {
@@ -14,8 +14,22 @@ describe("StakingPool Admin Functions", function () {
   }> {
     [owner] = await ethers.getSigners();
 
-    const stakingPoolFactory = await ethers.getContractFactory("StakingPool");
-    stakingPool = (await stakingPoolFactory.deploy()) as StakingPool;
+    // StakingPoolFactory 배포
+    const stakingPoolFactoryFactory = await ethers.getContractFactory(
+      "StakingPoolFactory"
+    );
+    const stakingPoolFactory =
+      (await stakingPoolFactoryFactory.deploy()) as StakingPoolFactory;
+
+    // StakingPoolFactory를 통해 StakingPool 생성
+    await stakingPoolFactory.connect(owner).createPool();
+    const poolsLength = await stakingPoolFactory.getPoolsLength();
+    const poolAddress = await stakingPoolFactory.pools(poolsLength - 1n);
+
+    stakingPool = (await ethers.getContractAt(
+      "StakingPool",
+      poolAddress
+    )) as StakingPool;
 
     return { stakingPool, owner };
   }

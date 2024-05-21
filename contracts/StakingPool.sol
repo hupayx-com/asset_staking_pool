@@ -103,8 +103,8 @@ contract StakingPool {
   event PoolOperatingStopped();
   event PoolFailed();
 
-  constructor() {
-    admin = msg.sender;
+  constructor(address _admin) {
+    admin = _admin;
     state = State.Waiting;
   }
 

@@ -1,7 +1,11 @@
 import { ethers, network } from "hardhat";
 import { expect } from "chai";
 import { Signer } from "ethers";
-import { Suffle, StakingPool } from "../typechain-types/index";
+import {
+  Suffle,
+  StakingPool,
+  StakingPoolFactory,
+} from "../typechain-types/index";
 import { PoolState } from "./util";
 
 describe("Staking", function () {
@@ -20,8 +24,22 @@ describe("Staking", function () {
   }> {
     [owner, staker_1, staker_2] = await ethers.getSigners();
 
-    const stakingPoolFactory = await ethers.getContractFactory("StakingPool");
-    stakingPool = (await stakingPoolFactory.deploy()) as StakingPool;
+    // StakingPoolFactory 배포
+    const stakingPoolFactoryFactory = await ethers.getContractFactory(
+      "StakingPoolFactory"
+    );
+    const stakingPoolFactory =
+      (await stakingPoolFactoryFactory.deploy()) as StakingPoolFactory;
+
+    // StakingPoolFactory를 통해 StakingPool 생성
+    await stakingPoolFactory.connect(owner).createPool();
+    const poolsLength = await stakingPoolFactory.getPoolsLength();
+    const poolAddress = await stakingPoolFactory.pools(poolsLength - 1n);
+
+    stakingPool = (await ethers.getContractAt(
+      "StakingPool",
+      poolAddress
+    )) as StakingPool;
 
     const suffleFactory = await ethers.getContractFactory("Suffle");
     suffle = (await suffleFactory.deploy()) as Suffle;
