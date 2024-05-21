@@ -89,7 +89,7 @@ describe("RewardCheck", function () {
     );
     expect(rewards).to.be.equal(ethers.parseEther("0"));
 
-    const stakeRecord = await stakingPool.stakingRecords(
+    const stakeRecord = await stakingPool.userStakes(
       await staker_1.getAddress(),
       0
     );
@@ -137,7 +137,7 @@ describe("RewardCheck", function () {
     );
     expect(rewards).to.be.equal(ethers.parseEther("5"));
 
-    const stakeRecord = await stakingPool.stakingRecords(
+    const stakeRecord = await stakingPool.userStakes(
       await staker_1.getAddress(),
       0
     );
@@ -191,7 +191,7 @@ describe("RewardCheck", function () {
     // 7 = 5 + 2
     expect(rewards).to.be.equal(ethers.parseEther("7"));
 
-    const stakeRecord = await stakingPool.stakingRecords(
+    const stakeRecord = await stakingPool.userStakes(
       await staker_1.getAddress(),
       0
     );
@@ -245,7 +245,7 @@ describe("RewardCheck", function () {
     );
     expect(rewards).to.be.equal(ethers.parseEther("0"));
 
-    const stakeRecord = await stakingPool.stakingRecords(
+    const stakeRecord = await stakingPool.userStakes(
       await staker_1.getAddress(),
       0
     );
@@ -299,7 +299,7 @@ describe("RewardCheck", function () {
     );
     expect(rewards).to.be.equal(ethers.parseEther("5"));
 
-    const stakeRecord = await stakingPool.stakingRecords(
+    const stakeRecord = await stakingPool.userStakes(
       await staker_1.getAddress(),
       0
     );

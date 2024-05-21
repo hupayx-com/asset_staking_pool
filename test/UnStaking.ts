@@ -80,7 +80,7 @@ describe("UnStaking", function () {
       .connect(staker_1)
       .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER_365));
 
-    let stakeRecord = await stakingPool.stakingRecords(
+    let stakeRecord = await stakingPool.userStakes(
       await staker_1.getAddress(),
       0
     );
@@ -90,28 +90,25 @@ describe("UnStaking", function () {
     expect(stakeRecord.claimedRewards).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord.multipliedTokenPrice).to.equal(1000000);
-    expect(stakeRecord.dailyInterest).to.equal(ethers.parseEther("2"));
+    expect(stakeRecord.dailyInterestInUSD).to.equal(ethers.parseEther("2"));
 
     await stakingPool
       .connect(staker_1)
       .unStakeToken(0, ethers.parseEther(STAKING_AMOUNT_ETHER_730));
 
-    const stakeLength = await stakingPool.getStakingRecordCount(
+    const stakeLength = await stakingPool.getUserStakeCount(
       await staker_1.getAddress()
     );
     expect(stakeLength).to.equal(1);
 
-    stakeRecord = await stakingPool.stakingRecords(
-      await staker_1.getAddress(),
-      0
-    );
+    stakeRecord = await stakingPool.userStakes(await staker_1.getAddress(), 0);
     expect(stakeRecord.amountStaked).to.equal(
       ethers.parseEther(STAKING_AMOUNT_ETHER_365)
     );
     expect(stakeRecord.claimedRewards).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord.multipliedTokenPrice).to.equal(1000000);
-    expect(stakeRecord.dailyInterest).to.equal(ethers.parseEther("1"));
+    expect(stakeRecord.dailyInterestInUSD).to.equal(ethers.parseEther("1"));
   });
 
   it("모금 기간에 일부 토큰을 언스테이킹 한다.", async function () {
@@ -134,7 +131,7 @@ describe("UnStaking", function () {
       .connect(staker_1)
       .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER_730));
 
-    let stakeRecord = await stakingPool.stakingRecords(
+    let stakeRecord = await stakingPool.userStakes(
       await staker_1.getAddress(),
       0
     );
@@ -144,7 +141,7 @@ describe("UnStaking", function () {
     expect(stakeRecord.claimedRewards).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord.multipliedTokenPrice).to.equal(1000000);
-    expect(stakeRecord.dailyInterest).to.equal(ethers.parseEther("2"));
+    expect(stakeRecord.dailyInterestInUSD).to.equal(ethers.parseEther("2"));
 
     await stakingPool.connect(owner).updateMultipliedTokenPrice(2000000);
 
@@ -152,22 +149,19 @@ describe("UnStaking", function () {
       .connect(staker_1)
       .unStakeToken(0, ethers.parseEther(STAKING_AMOUNT_ETHER_365));
 
-    const stakeLength = await stakingPool.getStakingRecordCount(
+    const stakeLength = await stakingPool.getUserStakeCount(
       await staker_1.getAddress()
     );
     expect(stakeLength).to.equal(1);
 
-    stakeRecord = await stakingPool.stakingRecords(
-      await staker_1.getAddress(),
-      0
-    );
+    stakeRecord = await stakingPool.userStakes(await staker_1.getAddress(), 0);
     expect(stakeRecord.amountStaked).to.equal(
       ethers.parseEther(STAKING_AMOUNT_ETHER_365)
     );
     expect(stakeRecord.claimedRewards).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord.multipliedTokenPrice).to.equal(1000000);
-    expect(stakeRecord.dailyInterest).to.equal(ethers.parseEther("1"));
+    expect(stakeRecord.dailyInterestInUSD).to.equal(ethers.parseEther("1"));
   });
 
   it("운영 기간내 토큰을 언스테이킹 하면 실패한다.", async function () {

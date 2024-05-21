@@ -97,7 +97,7 @@ describe("RewardClaim", function () {
     // 잔액 비교
     expect(finalBalance - initialBalance).to.equal(expectedReward);
 
-    const stakeRecord = await stakingPool.stakingRecords(
+    const stakeRecord = await stakingPool.userStakes(
       await staker_1.getAddress(),
       0
     );
@@ -159,7 +159,7 @@ describe("RewardClaim", function () {
     // 잔액 비교
     expect(finalBalance - initialBalance).to.equal(expectedReward);
 
-    const stakeRecord = await stakingPool.stakingRecords(
+    const stakeRecord = await stakingPool.userStakes(
       await staker_1.getAddress(),
       0
     );
@@ -228,7 +228,7 @@ describe("RewardClaim", function () {
     // 잔액 비교
     expect(finalBalance - initialBalance).to.equal(expectedReward);
 
-    const stakeRecord = await stakingPool.stakingRecords(
+    const stakeRecord = await stakingPool.userStakes(
       await staker_1.getAddress(),
       0
     );
@@ -290,7 +290,7 @@ describe("RewardClaim", function () {
     // 잔액 비교
     expect(finalBalance - initialBalance).to.equal(expectedReward);
 
-    const stakeRecord = await stakingPool.stakingRecords(
+    const stakeRecord = await stakingPool.userStakes(
       await staker_1.getAddress(),
       0
     );
@@ -361,7 +361,7 @@ describe("RewardClaim", function () {
     // 잔액 비교
     expect(finalBalance - initialBalance).to.equal(expectedReward);
 
-    let stakeRecord = await stakingPool.stakingRecords(
+    let stakeRecord = await stakingPool.userStakes(
       await staker_1.getAddress(),
       0
     );
@@ -390,10 +390,7 @@ describe("RewardClaim", function () {
     // 잔액 비교
     expect(finalBalance - initialBalance).to.equal(expectedReward);
 
-    stakeRecord = await stakingPool.stakingRecords(
-      await staker_1.getAddress(),
-      0
-    );
+    stakeRecord = await stakingPool.userStakes(await staker_1.getAddress(), 0);
     // 5(1th) + 2(2th)
     expect(stakeRecord.claimedRewards).to.equal(ethers.parseEther("7"));
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(2);
@@ -457,7 +454,7 @@ describe("RewardClaim", function () {
     // 잔액 비교
     expect(finalBalance - initialBalance).to.equal(expectedReward);
 
-    const stakeRecord = await stakingPool.stakingRecords(
+    const stakeRecord = await stakingPool.userStakes(
       await staker_1.getAddress(),
       0
     );

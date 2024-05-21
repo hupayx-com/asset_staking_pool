@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 // Uncomment this line to use console.log
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 interface IERC20 {
   function transferFrom(
@@ -10,6 +10,7 @@ interface IERC20 {
     address recipient,
     uint256 amount
   ) external returns (bool);
+
   function transfer(address recipient, uint256 amount) external returns (bool);
 }
 
@@ -32,13 +33,13 @@ contract StakingPool {
   uint256 public currentMultipliedTokenPrice = 0;
 
   // 총 모금 금액
-  uint256 public totalFundsRaised = 0;
+  uint256 public totalFundraisingInUSD = 0;
 
   // pool 상태
   enum State {
     Waiting, // 대기 (-> 모금)
-    Fundraising, // 모금 (-> 운영/잠김/모금 중지/실패)
-    Operating, // 운영 (-> 종료/운영 중지)
+    Fundraising, // 모금 (-> 운영/모금 잠김/모금 중지/모금 실패)
+    Operating, // 운영 (-> 운영 종료/운영 중지)
     Closed, // 운영 종료
     Locked, // 모금 잠김 (-> 운영)
     FundraisingStopped, // 모금 중지
@@ -51,25 +52,25 @@ contract StakingPool {
   struct Details {
     string name; // 이름
     string description; // 설명
-    uint256 minStakePrice; // 최소 스테이킹 금액
-    uint256 annualInterestRateMultiplier; // 연 이자율
-    uint256 minFundraisingPrice; // 최소 모금 금액
-    uint256 maxFundraisingPrice; // 최대 모금 금액
+    uint256 minStakeInUSD; // 최소 스테이킹 금액
+    uint256 multipliedAnnualInterestRate; // 연 이자율
+    uint256 minFundraisingInUSD; // 최소 모금 금액
+    uint256 maxFundraisingInUSD; // 최대 모금 금액
     address stakingToken; // staking token address
   }
   Details public details;
 
   // staking 정보
-  struct StakingRecord {
+  struct StakeRecord {
     uint256 amountStaked; // staking 수량
     uint256 stakeTime; // staking 시점(Unix time)
     uint256 claimedRewards; // 받은 보상
     uint256 pendingRewardScheduleIndex; // 보상 스케줄 목록에서 받을 보상들 중 첫번째 index
     uint256 multipliedTokenPrice; // staking 시점의 토큰 가격
-    uint256 dailyInterest; // 일 이자
+    uint256 dailyInterestInUSD; // 일 이자
   }
   // 동일 사용자의 staking 이라도 개별 관리
-  mapping(address => StakingRecord[]) public stakingRecords;
+  mapping(address => StakeRecord[]) public userStakes;
 
   // 보상 스케줄
   struct RewardSchedule {
@@ -134,7 +135,7 @@ contract StakingPool {
   function setMinStakePrice(uint256 _price) public onlyAdmin {
     require(state == State.Waiting, "Pool is not in Waiting state");
 
-    details.minStakePrice = _price;
+    details.minStakeInUSD = _price;
   }
 
   // 연 이자율 설정
@@ -143,21 +144,21 @@ contract StakingPool {
   ) public onlyAdmin {
     require(state == State.Waiting, "Pool is not in Waiting state");
 
-    details.annualInterestRateMultiplier = _multipliedInterestRate;
+    details.multipliedAnnualInterestRate = _multipliedInterestRate;
   }
 
   // 최소 모금 금액 설정
   function setMinFundraisingPrice(uint256 _price) public onlyAdmin {
     require(state == State.Waiting, "Pool is not in Waiting state");
 
-    details.minFundraisingPrice = _price;
+    details.minFundraisingInUSD = _price;
   }
 
   // 최대 모금 금액 설정
   function setMaxFundraisingPrice(uint256 _price) public onlyAdmin {
     require(state == State.Waiting, "Pool is not in Waiting state");
 
-    details.maxFundraisingPrice = _price;
+    details.maxFundraisingInUSD = _price;
   }
 
   // 스테이킹 토큰 주소 설정
@@ -291,7 +292,7 @@ contract StakingPool {
     );
 
     // 최소 스테이킹 금액 이상인지 확인
-    uint256 minStakeAmountInTokens = (details.minStakePrice *
+    uint256 minStakeAmountInTokens = (details.minStakeInUSD *
       tokenDecimals *
       TOKEN_PRICE_MULTIPLIER) / currentMultipliedTokenPrice;
 
@@ -303,22 +304,22 @@ contract StakingPool {
     // 최대 모금액을 초과하지 않는지 확인
     uint256 stakingAmountInUSD = (_amount * currentMultipliedTokenPrice) /
       tokenDecimals;
-    uint256 newTotalFundraising = totalFundsRaised + stakingAmountInUSD;
+    uint256 newTotalFundraising = totalFundraisingInUSD + stakingAmountInUSD;
     require(
       newTotalFundraising <=
-        details.maxFundraisingPrice * TOKEN_PRICE_MULTIPLIER,
+        details.maxFundraisingInUSD * TOKEN_PRICE_MULTIPLIER,
       "Amount exceeds the maximum fundraising amount"
     );
 
     // 최대 모금액에 도달한 경우 풀 상태를 "Locked"으로 변경
     if (
       newTotalFundraising ==
-      details.maxFundraisingPrice * TOKEN_PRICE_MULTIPLIER
+      details.maxFundraisingInUSD * TOKEN_PRICE_MULTIPLIER
     ) {
       state = State.Locked;
       emit PoolLocked();
     }
-    totalFundsRaised = newTotalFundraising;
+    totalFundraisingInUSD = newTotalFundraising;
 
     IERC20(details.stakingToken).transferFrom(
       msg.sender,
@@ -326,20 +327,20 @@ contract StakingPool {
       _amount
     );
 
-    uint256 dailyInterest = ((_amount * currentMultipliedTokenPrice) *
-      details.annualInterestRateMultiplier) /
+    uint256 dailyInterestInUSD = ((_amount * currentMultipliedTokenPrice) *
+      details.multipliedAnnualInterestRate) /
       365 /* 1 year */ /
       TOKEN_PRICE_MULTIPLIER /
       ANNUAL_INTEREST_RATE_MULTIPLIER;
 
-    stakingRecords[msg.sender].push(
-      StakingRecord({
+    userStakes[msg.sender].push(
+      StakeRecord({
         amountStaked: _amount,
         stakeTime: block.timestamp,
         claimedRewards: 0,
         pendingRewardScheduleIndex: 0,
         multipliedTokenPrice: currentMultipliedTokenPrice,
-        dailyInterest: dailyInterest
+        dailyInterestInUSD: dailyInterestInUSD
       })
     );
 
@@ -353,10 +354,10 @@ contract StakingPool {
       "Unstaking is only allowed during fundraising"
     );
 
-    StakingRecord[] storage records = stakingRecords[msg.sender];
+    StakeRecord[] storage records = userStakes[msg.sender];
     require(_stakeIndex < records.length, "Invalid stakeToken index");
 
-    StakingRecord storage record = records[_stakeIndex];
+    StakeRecord storage record = records[_stakeIndex];
     require(record.amountStaked >= _amount, "Insufficient staked amount");
 
     if (record.amountStaked == _amount) {
@@ -365,25 +366,27 @@ contract StakingPool {
     } else {
       record.amountStaked -= _amount;
 
-      uint256 dailyInterest = ((record.amountStaked *
-        record.multipliedTokenPrice) * details.annualInterestRateMultiplier) /
+      uint256 dailyInterestInUSD = ((record.amountStaked *
+        record.multipliedTokenPrice) * details.multipliedAnnualInterestRate) /
         365 /* 1 year */ /
         TOKEN_PRICE_MULTIPLIER /
         ANNUAL_INTEREST_RATE_MULTIPLIER;
 
-      record.dailyInterest = dailyInterest;
+      record.dailyInterestInUSD = dailyInterestInUSD;
     }
 
     IERC20(details.stakingToken).transfer(msg.sender, _amount);
 
     // TODO
     // 테스트 코드 필요
-    totalFundsRaised -= (_amount * record.multipliedTokenPrice) / tokenDecimals;
+    totalFundraisingInUSD -=
+      (_amount * record.multipliedTokenPrice) /
+      tokenDecimals;
 
     emit Unstaked(msg.sender, _amount);
   }
 
-  // 보상 요청 (운영/운영종료/운영중지 인 경우)
+  // staking 별 보상 요청 (운영/운영종료/운영중지 인 경우)
   function claimRewardToken(uint256 _stakeIndex) public {
     require(
       state == State.Operating ||
@@ -393,7 +396,7 @@ contract StakingPool {
     );
 
     require(
-      _stakeIndex < stakingRecords[msg.sender].length,
+      _stakeIndex < userStakes[msg.sender].length,
       "Invalid stakeToken index"
     );
 
@@ -403,7 +406,7 @@ contract StakingPool {
     );
     require(reward > 0, "No reward available");
 
-    StakingRecord storage userStake = stakingRecords[msg.sender][_stakeIndex];
+    StakeRecord storage userStake = userStakes[msg.sender][_stakeIndex];
     userStake.claimedRewards += reward;
     userStake.pendingRewardScheduleIndex = nextIndex;
 
@@ -422,7 +425,7 @@ contract StakingPool {
       "Invalid state for withdrawing principal"
     );
 
-    StakingRecord[] storage records = stakingRecords[msg.sender];
+    StakeRecord[] storage records = userStakes[msg.sender];
     uint256 totalAmount = 0;
 
     // 모든 보상이 청구되었는지 확인
@@ -449,7 +452,7 @@ contract StakingPool {
     require(state == State.Operating, "Invalid state for requesting rewards");
 
     // 보상 요청 로직
-    StakingRecord[] storage records = stakingRecords[msg.sender];
+    StakeRecord[] storage records = userStakes[msg.sender];
 
     for (uint256 i = 0; i < records.length; i++) {
       claimRewardToken(i);
@@ -469,12 +472,9 @@ contract StakingPool {
     address _user,
     uint256 _stakeIndex
   ) public view returns (uint256, uint256) {
-    require(
-      _stakeIndex < stakingRecords[_user].length,
-      "Invalid stakeToken index"
-    );
+    require(_stakeIndex < userStakes[_user].length, "Invalid stakeToken index");
 
-    StakingRecord storage userStake = stakingRecords[_user][_stakeIndex];
+    StakeRecord storage userStake = userStakes[_user][_stakeIndex];
     uint256 reward = 0;
     uint256 nextIndex = userStake.pendingRewardScheduleIndex;
 
@@ -507,7 +507,7 @@ contract StakingPool {
         if (effectivestart < effectiveend) {
           uint256 stakingDays = (effectiveend - effectivestart) / 1 days;
 
-          reward += (((userStake.dailyInterest * stakingDays) /
+          reward += (((userStake.dailyInterestInUSD * stakingDays) /
             schedule.multipliedTokenPriceAtPayout) * TOKEN_PRICE_MULTIPLIER);
         }
       }
@@ -529,7 +529,7 @@ contract StakingPool {
 
     // 보상 조회 로직
     uint256 totalReward = 0;
-    StakingRecord[] storage records = stakingRecords[_staker];
+    StakeRecord[] storage records = userStakes[_staker];
 
     for (uint256 i = 0; i < records.length; i++) {
       (uint256 reward, ) = calculatePendingRewardToken(_staker, i);
@@ -547,7 +547,7 @@ contract StakingPool {
 
     // 누적 보상 조회 로직
     uint256 totalReward = 0;
-    StakingRecord[] storage records = stakingRecords[_staker];
+    StakeRecord[] storage records = userStakes[_staker];
 
     for (uint256 i = 0; i < records.length; i++) {
       totalReward += records[i].claimedRewards;
@@ -557,9 +557,7 @@ contract StakingPool {
   }
 
   // 사용자의 스테이킹 개수를 얻어온다.
-  function getStakingRecordCount(
-    address _user
-  ) external view returns (uint256) {
-    return stakingRecords[_user].length;
+  function getUserStakeCount(address _user) external view returns (uint256) {
+    return userStakes[_user].length;
   }
 }
