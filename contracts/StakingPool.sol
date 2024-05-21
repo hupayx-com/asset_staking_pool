@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 // Uncomment this line to use console.log
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 interface IERC20 {
   function transferFrom(
@@ -375,6 +375,10 @@ contract StakingPool {
     }
 
     IERC20(details.stakingToken).transfer(msg.sender, _amount);
+
+    // TODO
+    // 테스트 코드 필요
+    totalFundsRaised -= (_amount * record.multipliedTokenPrice) / tokenDecimals;
 
     emit Unstaked(msg.sender, _amount);
   }
