@@ -23,6 +23,12 @@ contract StakingPoolFactory {
     _;
   }
 
+  function changeAdmin(address newAdmin) public onlyAdmin {
+    require(newAdmin != address(0), "New admin address cannot be zero");
+
+    admin = newAdmin;
+  }
+
   // 새로운 StakingPool을 생성하는 함수
   function createPool() public onlyAdmin returns (address) {
     // 새로운 StakingPool 인스턴스 생성

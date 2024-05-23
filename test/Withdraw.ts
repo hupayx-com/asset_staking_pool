@@ -75,7 +75,7 @@ describe("WithdrawPrincipal", function () {
     });
   });
 
-  it("모금 중지 시 원금은 회수 된다.", async function () {
+  it("모금 중지 시 원금이 회수 된다.(원금은 회수 시점 토큰 가격에 비례)", async function () {
     const { stakingPool, suffle, staker_1, owner } =
       await deployStakingPoolFixture();
 
@@ -94,19 +94,20 @@ describe("WithdrawPrincipal", function () {
       .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER));
 
     await stakingPool.connect(owner).stopPoolFundraising();
+    await stakingPool.connect(owner).updateMultipliedTokenPrice(100000);
 
-    await stakingPool.connect(staker_1).withdrawPrincipal();
+    await stakingPool.connect(staker_1).withdrawAllPrincipal();
 
     const stakerBalance = await suffle.balanceOf(await staker_1.getAddress());
     const expectedBalance =
       ethers.parseEther("1000000000") -
       ethers.parseEther(STAKING_AMOUNT_ETHER) +
-      ethers.parseEther(STAKING_AMOUNT_ETHER);
+      ethers.parseEther((parseInt(STAKING_AMOUNT_ETHER) * 10).toString());
 
     expect(stakerBalance).to.equal(expectedBalance);
   });
 
-  it("모금 실패 시 원금은 회수 된다.", async function () {
+  it("모금 실패 시 원금은 회수 된다.(원금은 회수 시점 토큰 가격에 비례)", async function () {
     const { stakingPool, suffle, staker_1, owner } =
       await deployStakingPoolFixture();
 
@@ -126,18 +127,19 @@ describe("WithdrawPrincipal", function () {
 
     await stakingPool.connect(owner).failPool();
 
-    await stakingPool.connect(staker_1).withdrawPrincipal();
+    await stakingPool.connect(owner).updateMultipliedTokenPrice(500000);
+    await stakingPool.connect(staker_1).withdrawAllPrincipal();
 
     const stakerBalance = await suffle.balanceOf(await staker_1.getAddress());
     const expectedBalance =
       ethers.parseEther("1000000000") -
       ethers.parseEther(STAKING_AMOUNT_ETHER) +
-      ethers.parseEther(STAKING_AMOUNT_ETHER);
+      ethers.parseEther((parseInt(STAKING_AMOUNT_ETHER) * 2).toString());
 
     expect(stakerBalance).to.equal(expectedBalance);
   });
 
-  it("운영 중지 시 보상과 원금을 순서대로 수령한다.", async function () {
+  it("운영 중지 시 보상과 원금을 순서대로 수령한다(원금은 회수 시점 토큰 가격에 비례)", async function () {
     const { stakingPool, suffle, staker_1, owner } =
       await deployStakingPoolFixture();
 
@@ -176,7 +178,7 @@ describe("WithdrawPrincipal", function () {
 
     // 보상이 남아 있는 상태에서 원금 인출 시도
     await expect(
-      stakingPool.connect(staker_1).withdrawPrincipal()
+      stakingPool.connect(staker_1).withdrawAllPrincipal()
     ).to.be.revertedWith(
       "Please claim all rewards before withdrawing principal"
     );
@@ -185,18 +187,20 @@ describe("WithdrawPrincipal", function () {
     await stakingPool.connect(staker_1).claimRewardToken(0);
 
     // 원금 인출 시도
-    await stakingPool.connect(staker_1).withdrawPrincipal();
+    await stakingPool.connect(owner).updateMultipliedTokenPrice(200000);
+    await stakingPool.connect(staker_1).withdrawAllPrincipal();
+
     const stakerBalance = await suffle.balanceOf(await staker_1.getAddress());
     const expectedBalance =
       ethers.parseEther("1000000000") -
       ethers.parseEther(STAKING_AMOUNT_ETHER) +
-      ethers.parseEther(STAKING_AMOUNT_ETHER) +
+      ethers.parseEther((parseInt(STAKING_AMOUNT_ETHER) * 5).toString()) +
       ethers.parseEther("5");
 
     expect(stakerBalance).to.equal(expectedBalance);
   });
 
-  it("운영 종료 시 보상과 원금을 순서대로 수령한다.", async function () {
+  it("운영 종료 시 보상과 원금을 순서대로 수령한다.(원금은 회수 시점 토큰 가격에 비례)", async function () {
     const { stakingPool, suffle, staker_1, owner } =
       await deployStakingPoolFixture();
 
@@ -235,7 +239,7 @@ describe("WithdrawPrincipal", function () {
 
     // 보상이 남아 있는 상태에서 원금 인출 시도
     await expect(
-      stakingPool.connect(staker_1).withdrawPrincipal()
+      stakingPool.connect(staker_1).withdrawAllPrincipal()
     ).to.be.revertedWith(
       "Please claim all rewards before withdrawing principal"
     );
@@ -244,12 +248,14 @@ describe("WithdrawPrincipal", function () {
     await stakingPool.connect(staker_1).claimRewardToken(0);
 
     // 원금 인출 시도
-    await stakingPool.connect(staker_1).withdrawPrincipal();
+    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000 * 5);
+    await stakingPool.connect(staker_1).withdrawAllPrincipal();
+
     const stakerBalance = await suffle.balanceOf(await staker_1.getAddress());
     const expectedBalance =
       ethers.parseEther("1000000000") -
       ethers.parseEther(STAKING_AMOUNT_ETHER) +
-      ethers.parseEther(STAKING_AMOUNT_ETHER) +
+      ethers.parseEther((parseInt(STAKING_AMOUNT_ETHER) * (1 / 5)).toString()) +
       ethers.parseEther("2");
 
     expect(stakerBalance).to.equal(expectedBalance);

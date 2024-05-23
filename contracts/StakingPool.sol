@@ -117,6 +117,12 @@ contract StakingPool {
   // Pool 관련 설정 함수들 by Admin //
   ////////////////////////////////
 
+  function changeAdmin(address newAdmin) public onlyAdmin {
+    require(newAdmin != address(0), "New admin address cannot be zero");
+
+    admin = newAdmin;
+  }
+
   // Pool 이름 설정
   function setPoolName(string memory _name) public onlyAdmin {
     require(state == State.Waiting, "Pool is not in Waiting state");
@@ -416,7 +422,7 @@ contract StakingPool {
   }
 
   // 원금 회수 (모금중지/모금실패/운영중지/운영종료 인 경우)
-  function withdrawPrincipal() public {
+  function withdrawAllPrincipal() public {
     require(
       state == State.FundraisingStopped ||
         state == State.Failed ||
@@ -438,7 +444,10 @@ contract StakingPool {
     }
 
     for (uint256 i = 0; i < records.length; i++) {
-      totalAmount += records[i].amountStaked;
+      uint256 amount = (records[i].amountStaked *
+        records[i].multipliedTokenPrice) / currentMultipliedTokenPrice;
+
+      totalAmount += amount;
       records[i].amountStaked = 0;
     }
 
