@@ -266,4 +266,47 @@ describe("UnStaking", function () {
         .unStakeToken(0, ethers.parseEther(STAKING_AMOUNT_ETHER_730))
     ).to.be.revertedWith("Unstaking is only allowed during fundraising");
   });
+
+  // 총 모금액 테스트 케이스 추가
+  it("언스테이킹 시 총 모금액이 올바르게 차감된다.", async function () {
+    const { stakingPool, suffle, staker_1, owner } =
+      await deployStakingPoolFixture();
+
+    // 모금 시작
+    await stakingPool.connect(owner).startFundraising();
+
+    const STAKING_AMOUNT_ETHER_1000 = "1000";
+    const UNSTAKING_AMOUNT_ETHER_500 = "500";
+    const TOKEN_PRICE_USD = 2000000;
+
+    await stakingPool
+      .connect(owner)
+      .updateMultipliedTokenPrice(TOKEN_PRICE_USD);
+
+    // 스테이킹
+    await suffle
+      .connect(staker_1)
+      .approve(
+        stakingPool.getAddress(),
+        ethers.parseEther(STAKING_AMOUNT_ETHER_1000)
+      );
+    await stakingPool
+      .connect(staker_1)
+      .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER_1000));
+
+    // 총 모금액 확인
+    let totalFundraisingInMultipliedUSD =
+      await stakingPool.totalFundraisingInMultipliedUSD();
+    expect(totalFundraisingInMultipliedUSD).to.equal(1000 * TOKEN_PRICE_USD); // 1,000 USD * 1,000,000
+
+    // 언스테이킹
+    await stakingPool
+      .connect(staker_1)
+      .unStakeToken(0, ethers.parseEther(UNSTAKING_AMOUNT_ETHER_500));
+
+    // 총 모금액 확인
+    totalFundraisingInMultipliedUSD =
+      await stakingPool.totalFundraisingInMultipliedUSD();
+    expect(totalFundraisingInMultipliedUSD).to.equal(500 * TOKEN_PRICE_USD); // 500 USD * 1,000,000
+  });
 });

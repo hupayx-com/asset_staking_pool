@@ -10,7 +10,7 @@ import { getCurrentBlockchainTime } from "./util";
 
 const SECONDS_IN_A_DAY = 86400;
 
-describe("RewardClaim", function () {
+describe("RewardClaim (한 명의 사용자)", function () {
   let stakingPool: StakingPool;
   let suffle: Suffle;
   let owner: Signer;

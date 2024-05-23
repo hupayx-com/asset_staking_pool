@@ -10,7 +10,7 @@ import {
   StakingPoolFactory,
 } from "../typechain-types/index";
 
-describe("Admin change tests", function () {
+describe("Admin 변경", function () {
   let stakingPool: StakingPool;
   let suffle: Suffle;
   let owner: Signer;
@@ -37,7 +37,6 @@ describe("Admin change tests", function () {
 
     stakingPoolFactory =
       (await stakingPoolFactoryFactory.deploy()) as StakingPoolFactory;
-
     // StakingPoolFactory를 통해 StakingPool 생성
     await stakingPoolFactory.connect(owner).createPool();
 
@@ -85,23 +84,6 @@ describe("Admin change tests", function () {
     };
   }
 
-  async function deployStakingPoolFactoryFixture(): Promise<{
-    owner: Signer;
-    nonAdmin: Signer;
-    stakingPoolFactory: StakingPoolFactory;
-  }> {
-    [owner, , , nonAdmin] = await ethers.getSigners();
-
-    // StakingPoolFactory 배포
-    const stakingPoolFactoryFactory = await ethers.getContractFactory(
-      "StakingPoolFactory"
-    );
-
-    stakingPoolFactory =
-      (await stakingPoolFactoryFactory.deploy()) as StakingPoolFactory;
-    return { owner, nonAdmin, stakingPoolFactory };
-  }
-
   beforeEach(async function () {
     await network.provider.request({
       method: "hardhat_reset",
@@ -109,9 +91,7 @@ describe("Admin change tests", function () {
     });
   });
 
-  // StakingPool에 대한 changeAdmin 테스트
-
-  it("StakingPool에서 Admin 변경이 성공적으로 이루어진다", async function () {
+  it("StakingPool 에서 Admin 변경이 성공적으로 이루어진다", async function () {
     const { stakingPool, owner, nonAdmin } = await deployStakingPoolFixture();
 
     // 기본 admin은 배포한 소유자(owner)로 설정됨
@@ -126,7 +106,7 @@ describe("Admin change tests", function () {
     expect(newAdmin).to.equal(await nonAdmin.getAddress());
   });
 
-  it("StakingPool에서 비 관리자 계정이 admin을 변경하려고 할 때 실패한다", async function () {
+  it("StakingPool 에서 비 관리자 계정이 admin을 변경하려고 할 때 실패한다", async function () {
     const { stakingPool, staker_1, nonAdmin } =
       await deployStakingPoolFixture();
 
@@ -136,10 +116,9 @@ describe("Admin change tests", function () {
     ).to.be.revertedWith("Not an admin");
   });
 
-  // StakingPoolFactory에 대한 changeAdmin 테스트
-  it("StakingPoolFactory에서 Admin 변경이 성공적으로 이루어진다", async function () {
+  it("StakingPoolFactory 에서 Admin 변경이 성공적으로 이루어진다", async function () {
     const { stakingPoolFactory, owner, nonAdmin } =
-      await deployStakingPoolFactoryFixture();
+      await deployStakingPoolFixture();
 
     // 기본 admin은 배포한 소유자(owner)로 설정됨
     const initialFactoryAdmin = await stakingPoolFactory.admin();
@@ -153,9 +132,8 @@ describe("Admin change tests", function () {
     expect(newFactoryAdmin).to.equal(await nonAdmin.getAddress());
   });
 
-  it("StakingPoolFactory에서 비 관리자 계정이 admin을 변경하려고 할 때 실패한다", async function () {
-    const { stakingPoolFactory, nonAdmin } =
-      await deployStakingPoolFactoryFixture();
+  it("StakingPoolFactory 에서 비 관리자 계정이 admin을 변경하려고 할 때 실패한다", async function () {
+    const { stakingPoolFactory, nonAdmin } = await deployStakingPoolFixture();
 
     [, staker_1] = await ethers.getSigners();
 
