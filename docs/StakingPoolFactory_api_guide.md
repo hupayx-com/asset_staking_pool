@@ -1,84 +1,49 @@
-# StakingPoolFactory
+# StakingPoolFactory API 가이드
 
 ## 개요
 
-이 문서는 Solidity로 작성된 `StakingPoolFactory` 스마트 컨트랙트의 주석을 기반으로 작성된 문서입니다. 이 스마트 컨트랙트는 다른 `StakingPool` 컨트랙트를 생성하고 관리하는 팩토리 컨트랙트입니다.
+이 가이드는 StakingPoolFactory 스마트 계약을 사용하는 방법에 대한 정보를 제공합니다. StakingPoolFactory를 통해 관리자는 새로운 스테이킹 풀을 생성하고, 모든 풀을 관리할 수 있습니다.
 
-## 주요 변수
+## 함수 시그니처
 
-- `admin`: 팩토리 컨트랙트의 관리자 주소
-- `pools`: 생성된 모든 풀들을 저장하는 배열
+### 관리자 함수
 
-## 이벤트
+#### changeAdmin(address newAdmin)
 
-- `PoolCreated`: 새로운 풀 생성 시 발생하는 이벤트 (풀 주소, 생성자 주소)
+- **설명:** 관리자 주소를 업데이트합니다.
+- **매개변수:**
+- `newAdmin (address)`: 새로운 관리자 주소.
+- **시그니처:** `changeAdmin(address newAdmin)`
 
-## 함수
+#### createPool()
 
-### 관리자 전용 함수 제한자 (modifier)
+- **설명:** 새로운 StakingPool을 생성합니다.
+- **매개변수:** 없음.
+- **리턴값:**
+- `address`: 새로 생성된 StakingPool 컨트랙트 주소.
+- **시그니처:** `createPool()`
 
-```solidity
-modifier onlyAdmin()
-```
+#### getAllPools()
 
-관리자 전용 함수에 대한 접근 제한을 설정합니다. `msg.sender`가 관리자 주소와 같은지 확인합니다.
+- **설명:** 생성된 모든 풀의 주소를 반환합니다.
+- **매개변수:** 없음.
+- **리턴값:**
+- `StakingPool[]`: 생성된 모든 풀의 주소가 포함된 배열.
+- **시그니처:** `getAllPools()`
 
-### 기본 생성자
+#### getPoolDetails(uint256 \_index)
 
-```solidity
-constructor()
-```
+- **설명:** 특정 인덱스의 풀 정보를 반환합니다.
+- **매개변수:**
+- `_index (uint256)`: 풀의 인덱스.
+- **리턴값:**
+- `StakingPool.Details`: 특정 인덱스의 풀 정보.
+- **시그니처:** `getPoolDetails(uint256 _index)`
 
-팩토리 컨트랙트의 초기 생성자 함수입니다. 컨트랙트를 배포하는 주소를 `admin` 변수에 저장합니다.
+#### getPoolsLength()
 
-### 관리자 변경 함수
-
-```solidity
-function changeAdmin(address newAdmin) public onlyAdmin
-```
-
-팩토리 컨트랙트의 관리자를 변경합니다.
-
-- `newAdmin`: 새 관리자 주소
-- 제한조건: 새로운 관리자의 주소는 0번 주소가 될 수 없습니다.
-
-### 풀 생성 함수
-
-```solidity
-function createPool() public onlyAdmin returns (address)
-```
-
-새로운 `StakingPool` 컨트랙트를 생성합니다.
-
-- 반환값: 새로 생성된 `StakingPool` 컨트랙트 주소
-
-### 생성된 모든 풀 조회 함수
-
-```solidity
-function getAllPools() public view returns (StakingPool[] memory)
-```
-
-생성된 모든 풀의 주소를 반환합니다.
-
-- 반환값: `StakingPool` 주소가 포함된 배열
-
-### 특정 인덱스의 풀 정보 조회 함수
-
-```solidity
-function getPoolDetails(uint256 _index) public view returns (StakingPool.Details memory)
-```
-
-특정 인덱스의 풀 정보를 반환합니다.
-
-- `_index`: 정보를 조회할 풀의 인덱스
-- 반환값: 특정 인덱스의 풀 정보 (`StakingPool.Details` 구조체)
-
-### 생성된 풀의 개수 조회 함수
-
-```solidity
-function getPoolsLength() public view returns (uint256)
-```
-
-생성된 풀의 개수를 반환합니다.
-
-- 반환값: 생성된 풀의 개수
+- **설명:** 생성된 풀의 개수를 반환합니다.
+- **매개변수:** 없음.
+- **리턴값:**
+- `uint256`: 생성된 풀의 개수.
+- **시그니처:** `getPoolsLength()`

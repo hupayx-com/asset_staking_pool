@@ -1,230 +1,198 @@
-# Staking Pool
+# 스테이킹풀 API 가이드
 
 ## 개요
 
-이 문서는 Solidity로 작성된 `StakingPool` 스마트 컨트랙트의 주석을 기반으로 작성된 문서입니다. 이 스마트 컨트랙트는 토큰 스테이킹 풀을 구현합니다.
+이 가이드는 스테이킹풀 스마트 계약을 사용하는 방법에 대한 정보를 제공합니다. 스테이킹풀을 통해 사용자는 토큰을 스테이킹하고, 보상을 청구하며, 풀의 설정 및 상태를 관리할 수 있습니다.
 
-## 용어 정의
+## 함수 시그니처
 
-- **소수점 계산을 위한 의사 수치:**
-- `PRICE_MULTIPLIER`: 1,000,000 (ex. 2024년 4월 27일 SFL 가격: $0.002718)
-- `ANNUAL_INTEREST_RATE_MULTIPLIER`: 100 (ex. 이자율: 0.05 %)
-- **시간 단위**: 초
+### 관리자 함수
 
-## 구현된 기능
+#### changeAdmin(address newAdmin)
 
-### 주요 변수
+- **설명:** 관리자 주소를 업데이트합니다.
+- **매개변수:**
+- `newAdmin (address)`: 새로운 관리자 주소.
+- **시그니처:** `changeAdmin(address newAdmin)`
 
-- `admin`: 풀의 관리자 주소
-- `tokenDecimals`: 기본값은 1e18 (wei)
-- `currentMultipliedTokenPrice`: 실시간 Token 가격 반영을 위해 외부에서 주기적으로 업데이트 필요
-- `totalFundraisingInMultipliedUSD`: 총 모금 금액
+#### setPoolName(string memory \_name)
 
-### 상태 (State) 열거형
+- **설명:** 풀 이름을 설정합니다.
+- **매개변수:**
+- `_name (string)`: 풀 이름.
+- **시그니처:** `setPoolName(string memory _name)`
 
-- `State.Waiting`: 대기 (-> 모금)
-- `State.Fundraising`: 모금 (-> 운영/모금 잠김/모금 중지/모금 실패)
-- `State.Operating`: 운영 (-> 운영 종료/운영 중지)
-- `State.Closed`: 운영 종료
-- `State.Locked`: 모금 잠김 (-> 운영)
-- `State.FundraisingStopped`: 모금 중지
-- `State.OperatingStopped`: 운영 중지
-- `State.Failed`: 모금 실패
+#### setPoolDescription(string memory \_description)
 
-### 구조체
+- **설명:** 풀 설명을 설정합니다.
+- **매개변수:**
+- `_description (string)`: 풀 설명.
+- **시그니처:** `setPoolDescription(string memory _description)`
 
-#### `Details`
+#### setMinStakePrice(uint256 \_price)
 
-풀의 세부사항을 나타내는 구조체:
+- **설명:** 최소 스테이킹 금액을 설정합니다.
+- **매개변수:**
+- `_price (uint256)`: 최소 스테이킹 금액.
+- **시그니처:** `setMinStakePrice(uint256 _price)`
 
-- `name`: 이름
-- `description`: 설명
-- `minStakeInUSD`: 최소 스테이킹 금액
-- `multipliedAnnualInterestRate`: 연 이자율
-- `minFundraisingInUSD`: 최소 모금 금액
-- `maxFundraisingInUSD`: 최대 모금 금액
-- `stakingToken`: 스테이킹 토큰 주소
+#### setAnnualInterestRateMultiplier(uint256 \_multipliedInterestRate)
 
-#### `StakeRecord`
+- **설명:** 연 이자율을 설정합니다.
+- **매개변수:**
+- `_multipliedInterestRate (uint256)`: 연 이자율.
+- **시그니처:** `setAnnualInterestRateMultiplier(uint256 _multipliedInterestRate)`
 
-스테이킹 정보를 저장하는 구조체:
+#### setMinFundraisingPrice(uint256 \_price)
 
-- `amountStaked`: 스테이킹 수량
-- `stakeTime`: 스테이킹 시점(Unix time)
-- `claimedRewards`: 받은 보상
-- `pendingRewardScheduleIndex`: 보상 스케줄 목록에서 받을 보상들 중 첫 번째 인덱스
-- `multipliedTokenPrice`: 스테이킹 시점의 토큰 가격
-- `dailyInterestInUSD`: 일 이자
+- **설명:** 최소 모금 금액을 설정합니다.
+- **매개변수:**
+- `_price (uint256)`: 최소 모금 금액.
+- **시그니처:** `setMinFundraisingPrice(uint256 _price)`
 
-#### `RewardSchedule`
+#### setMaxFundraisingPrice(uint256 \_price)
 
-보상 스케줄을 정의하는 구조체:
+- **설명:** 최대 모금 금액을 설정합니다.
+- **매개변수:**
+- `_price (uint256)`: 최대 모금 금액.
+- **시그니처:** `setMaxFundraisingPrice(uint256 _price)`
 
-- `multipliedTokenPriceAtPayout`: 보상 시 적용될 토큰 가격
-- `start`: 보상 시작 시점(Unix time)
-- `end`: 보상 종료 시점(Unix time)
+#### setStakingToken(address \_tokenAddress)
 
-### 이벤트
+- **설명:** 스테이킹 토큰 주소를 설정합니다.
+- **매개변수:**
+- `_tokenAddress (address)`: 토큰 주소.
+- **시그니처:** `setStakingToken(address _tokenAddress)`
 
-- `Staked`: 스테이킹 발생 시 이벤트 (사용자 주소, 금액)
-- `Unstaked`: 언스테이킹 발생 시 이벤트 (사용자 주소, 금액)
-- `RewardScheduleAdded`: 보상 스케줄 추가 이벤트 (보상 시 토큰 가격, 시작 시점, 종료 시점)
-- `RewardClaimed`: 보상 청구 시 이벤트 (사용자 주소, 보상 금액)
-- `MultipliedTokenPriceUpdated`: 토큰 가격 업데이트 시 이벤트 (새로운 가격)
-- `PrincipalWithdrawn`: 원금 회수 시 이벤트 (사용자 주소, 총 금액)
+#### updateMultipliedTokenPrice(uint256 \_price)
 
-## 관리자 전용 함수
+- **설명:** 실시간 토큰 가격을 업데이트합니다.
+- **매개변수:**
+- `_price (uint256)`: 새로운 토큰 가격.
+- **시그니처:** `updateMultipliedTokenPrice(uint256 _price)`
 
-### Pool 관련 설정 함수 by Admin
+#### addRewardSchedule(uint256 \_multipliedTokenPriceAtPayout, uint256 \_start, uint256 \_end)
 
-#### `changeAdmin`
+- **설명:** 보상 스케줄을 추가합니다.
+- **매개변수:**
+- `_multipliedTokenPriceAtPayout (uint256)`: 보상 시 적용될 토큰 가격.
+- `_start (uint256)`: 보상 시작 시점(Unix time).
+- `_end (uint256)`: 보상 종료 시점(Unix time).
+- **시그니처:** `addRewardSchedule(uint256 _multipliedTokenPriceAtPayout, uint256 _start, uint256 _end)`
 
-관리자 변경 함수:
+### 상태 변경 함수
 
-- `newAdmin`: 새 관리자 주소
+#### startFundraising()
 
-#### `setPoolName`
+- **설명:** 모금을 시작합니다.
+- **매개변수:** 없음.
+- **시그니처:** `startFundraising()`
 
-Pool 이름 설정:
+#### startOperating()
 
-- `_name`: 풀 이름
+- **설명:** 운영을 시작합니다.
+- **매개변수:** 없음.
+- **시그니처:** `startOperating()`
 
-#### `setPoolDescription`
+#### closePool()
 
-Pool 설명 설정:
+- **설명:** 풀을 종료합니다.
+- **매개변수:** 없음.
+- **시그니처:** `closePool()`
 
-- `_description`: 풀 설명
+#### lockPool()
 
-#### `setMinStakePrice`
+- **설명:** 풀을 잠급니다.
+- **매개변수:** 없음.
+- **시그니처:** `lockPool()`
 
-최소 스테이킹 금액 설정:
+#### stopPoolFundraising()
 
-- `_price`: 최소 스테이킹 금액
+- **설명:** 모금을 중지합니다.
+- **매개변수:** 없음.
+- **시그니처:** `stopPoolFundraising()`
 
-#### `setAnnualInterestRateMultiplier`
+#### stopPoolOperating()
 
-연 이자율 설정:
+- **설명:** 운영을 중지합니다.
+- **매개변수:** 없음.
+- **시그니처:** `stopPoolOperating()`
 
-- `_multipliedInterestRate`: 연 이자율
+#### failPool()
 
-#### `setMinFundraisingPrice`
+- **설명:** 풀을 실패로 표시합니다.
+- **매개변수:** 없음.
+- **시그니처:** `failPool()`
 
-최소 모금 금액 설정:
+### 사용자 함수
 
-- `_price`: 최소 모금 금액
+#### stakeToken(uint256 \_amount)
 
-#### `setMaxFundraisingPrice`
+- **설명:** 토큰을 스테이킹합니다.
+- **매개변수:**
+- `_amount (uint256)`: 스테이킹 할 금액.
+- **시그니처:** `stakeToken(uint256 _amount)`
 
-최대 모금 금액 설정:
+#### unStakeToken(uint256 \_stakeIndex, uint256 \_amount)
 
-- `_price`: 최대 모금 금액
+- **설명:** 토큰을 언스테이킹합니다.
+- **매개변수:**
+- `_stakeIndex (uint256)`: 스테이킹 인덱스.
+- `_amount (uint256)`: 언스테이킹 할 금액.
+- **시그니처:** `unStakeToken(uint256 _stakeIndex, uint256 _amount)`
 
-#### `setStakingToken`
+#### claimRewardToken(uint256 \_stakeIndex)
 
-스테이킹 토큰 주소 설정:
+- **설명:** 스테이킹 별 보상을 청구합니다.
+- **매개변수:**
+- `_stakeIndex (uint256)`: 스테이킹 인덱스.
+- **시그니처:** `claimRewardToken(uint256 _stakeIndex)`
 
-- `_tokenAddress`: 토큰 주소
+#### withdrawAllPrincipal()
 
-#### `updateMultipliedTokenPrice`
+- **설명:** 원금을 회수합니다.
+- **매개변수:** 없음.
+- **시그니처:** `withdrawAllPrincipal()`
 
-실시간 Token 가격을 외부에서 주기적으로 업데이트:
+#### claimAllRewardToken()
 
-- `_price`: 새로운 토큰 가격
+- **설명:** 사용자의 전체 보상을 요청합니다.
+- **매개변수:** 없음.
+- **시그니처:** `claimAllRewardToken()`
 
-#### `addRewardSchedule`
+### 조회 함수
 
-보상 스케줄을 추가:
+#### getPoolDetails()
 
-- `_multipliedTokenPriceAtPayout`: 보상 시 적용될 토큰 가격
-- `_start`: 보상 시작 시점(Unix time)
-- `_end`: 보상 종료 시점(Unix time)
+- **설명:** 풀의 세부사항을 조회합니다.
+- **매개변수:** 없음.
+- **시그니처:** `getPoolDetails()`
 
-### 상태 변경 함수 by Admin
+#### calculatePendingRewardToken(address \_user, uint256 \_stakeIndex)
 
-#### `startFundraising`
+- **설명:** 사용자가 받을 보상 금액과 다음 인덱스를 조회합니다.
+- **매개변수:**
+- `_user (address)`: 사용자 주소.
+- `_stakeIndex (uint256)`: 스테이킹 인덱스.
+- **시그니처:** `calculatePendingRewardToken(address _user, uint256 _stakeIndex)`
 
-모금 시작
+#### calculateAllPendingRewardToken(address \_staker)
 
-#### `startOperating`
+- **설명:** 사용자가 받을 전체 보상 금액을 조회합니다.
+- **매개변수:**
+- `_staker (address)`: 사용자 주소.
+- **시그니처:** `calculateAllPendingRewardToken(address _staker)`
 
-운영 시작
+#### calculateAllClaimedRewardToken(address \_staker)
 
-#### `closePool`
+- **설명:** 사용자가 청구한 전체 보상 금액을 조회합니다.
+- **매개변수:**
+- `_staker (address)`: 사용자 주소.
+- **시그니처:** `calculateAllClaimedRewardToken(address _staker)`
 
-풀 종료
+#### getUserStakeCount(address \_user)
 
-#### `lockPool`
-
-풀 잠금
-
-#### `stopPoolFundraising`
-
-모금 중지
-
-#### `stopPoolOperating`
-
-운영 중지
-
-#### `failPool`
-
-풀 실패
-
-## 사용자 요청 함수
-
-#### `stakeToken`
-
-스테이킹:
-
-- `_amount`: 스테이킹 금액
-
-#### `unStakeToken`
-
-언스테이킹:
-
-- `_stakeIndex`: 스테이킹 인덱스
-- `_amount`: 언스테이킹 할 금액
-
-#### `claimRewardToken`
-
-스테이킹 별 보상 요청:
-
-- `_stakeIndex`: 스테이킹 인덱스
-
-#### `withdrawAllPrincipal`
-
-원금 회수
-
-#### `claimAllRewardToken`
-
-사용자의 전체 보상 요청
-
-## 사용자 조회 함수
-
-### `getPoolDetails`
-
-풀 세부사항 조회
-
-### `calculatePendingRewardToken`
-
-받을 보상 조회:
-
-- `_user`: 사용자 주소
-- `_stakeIndex`: 스테이킹 인덱스
-
-### `calculateAllPendingRewardToken`
-
-사용자의 전체 받을 보상 조회:
-
-- `_staker`: 사용자 주소
-
-### `calculateAllClaimedRewardToken`
-
-사용자의 전체 받은 보상 조회:
-
-- `_staker`: 사용자 주소
-
-### `getUserStakeCount`
-
-사용자의 스테이킹 개수 조회:
-
-- `_user`: 사용자 주소
+- **설명:** 사용자의 스테이킹 개수를 조회합니다.
+- **매개변수:**
+- `_user (address)`: 사용자 주소.
+- **시그니처:** `getUserStakeCount(address _user)`
