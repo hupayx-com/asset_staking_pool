@@ -143,9 +143,9 @@ contract StakingPool {
     _;
   }
 
-  /////////////////////////////
+  //////////////////////////////////
   /// Pool 관련 설정 함수들 by Admin ///
-  /////////////////////////////
+  //////////////////////////////////
 
   /**
    * @notice 관리자 변경 함수
@@ -268,9 +268,9 @@ contract StakingPool {
     emit RewardScheduleAdded(_multipliedTokenPriceAtPayout, _start, _end);
   }
 
-  ///////////////////////////
+  /////////////////////////////
   /// 상태 변경 함수들 by Admin ///
-  ///////////////////////////
+  /////////////////////////////
 
   /**
    * @notice 모금 시작
@@ -554,9 +554,9 @@ contract StakingPool {
     }
   }
 
-  //////////////
+  ////////////////
   /// 사용자 조회 ///
-  //////////////
+  ////////////////
 
   function getPoolDetails() external view returns (Details memory) {
     return details;
