@@ -47,9 +47,8 @@ contract StakingPoolFactory {
 
   /**
    * @notice 새로운 StakingPool을 생성하는 함수
-   * @return address 새로 생성된 StakingPool 컨트랙트 주소
    */
-  function createPool() public onlyAdmin returns (address) {
+  function createPool() public onlyAdmin {
     // 새로운 StakingPool 인스턴스 생성
     StakingPool newPool = new StakingPool(msg.sender);
 
@@ -57,8 +56,6 @@ contract StakingPoolFactory {
     pools.push(newPool);
 
     emit PoolCreated(address(newPool), msg.sender);
-
-    return address(newPool);
   }
 
   /**
