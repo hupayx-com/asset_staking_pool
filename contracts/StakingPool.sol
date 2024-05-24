@@ -203,14 +203,14 @@ contract StakingPool {
 
   /**
    * @notice 연 이자율 설정
-   * @param _multipliedInterestRate 연 이자율
+   * @param _interestRate 연 이자율
    */
   function setAnnualInterestRateMultiplier(
-    uint256 _multipliedInterestRate
+    uint256 _interestRate
   ) public onlyAdmin {
     require(state == State.Waiting, "Pool is not in Waiting state");
 
-    details.annualInterestMultipliedRate = _multipliedInterestRate;
+    details.annualInterestMultipliedRate = _interestRate;
   }
 
   /**

@@ -73,6 +73,9 @@ describe("StakingPoolFactory", function () {
     const pools = await stakingPoolFactory.getAllPools();
 
     expect(pools.length).to.equal(2);
+    for (const pool of pools) {
+      expect(pool).to.be.properAddress;
+    }
   });
 
   it("특정 인덱스의 풀 정보를 반환해야 합니다.", async function () {
