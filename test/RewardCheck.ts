@@ -101,7 +101,7 @@ describe("RewardCheck", function () {
     await ethers.provider.send("evm_increaseTime", [SECONDS_IN_A_DAY * 1]);
     await ethers.provider.send("evm_mine");
 
-    const [rewards, nextIndex] = await stakingPool.calculatePendingRewardToken(
+    const [rewards, nextIndex] = await stakingPool.calculatePendingReward(
       await staker_1.getAddress(),
       0
     );
@@ -111,7 +111,7 @@ describe("RewardCheck", function () {
       await staker_1.getAddress(),
       0
     );
-    expect(stakeRecord.claimedRewards).to.equal(0);
+    expect(stakeRecord.claimedReward).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
   });
 
@@ -149,7 +149,7 @@ describe("RewardCheck", function () {
     await ethers.provider.send("evm_increaseTime", [SECONDS_IN_A_DAY * 15]);
     await ethers.provider.send("evm_mine");
 
-    const [rewards, nextIndex] = await stakingPool.calculatePendingRewardToken(
+    const [rewards, nextIndex] = await stakingPool.calculatePendingReward(
       await staker_1.getAddress(),
       0
     );
@@ -159,7 +159,7 @@ describe("RewardCheck", function () {
       await staker_1.getAddress(),
       0
     );
-    expect(stakeRecord.claimedRewards).to.equal(0);
+    expect(stakeRecord.claimedReward).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
   });
 
@@ -202,7 +202,7 @@ describe("RewardCheck", function () {
     await ethers.provider.send("evm_increaseTime", [SECONDS_IN_A_DAY * 25]);
     await ethers.provider.send("evm_mine");
 
-    const [rewards, nextIndex] = await stakingPool.calculatePendingRewardToken(
+    const [rewards, nextIndex] = await stakingPool.calculatePendingReward(
       await staker_1.getAddress(),
       0
     );
@@ -213,7 +213,7 @@ describe("RewardCheck", function () {
       await staker_1.getAddress(),
       0
     );
-    expect(stakeRecord.claimedRewards).to.equal(0);
+    expect(stakeRecord.claimedReward).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
   });
 
@@ -257,7 +257,7 @@ describe("RewardCheck", function () {
     await ethers.provider.send("evm_increaseTime", [SECONDS_IN_A_DAY * 5 - 2]);
     await ethers.provider.send("evm_mine");
 
-    const [rewards, nextIndex] = await stakingPool.calculatePendingRewardToken(
+    const [rewards, nextIndex] = await stakingPool.calculatePendingReward(
       await staker_1.getAddress(),
       0
     );
@@ -267,7 +267,7 @@ describe("RewardCheck", function () {
       await staker_1.getAddress(),
       0
     );
-    expect(stakeRecord.claimedRewards).to.equal(0);
+    expect(stakeRecord.claimedReward).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
   });
 
@@ -311,7 +311,7 @@ describe("RewardCheck", function () {
     await ethers.provider.send("evm_increaseTime", [SECONDS_IN_A_DAY * 16 - 2]);
     await ethers.provider.send("evm_mine");
 
-    const [rewards, nextIndex] = await stakingPool.calculatePendingRewardToken(
+    const [rewards, nextIndex] = await stakingPool.calculatePendingReward(
       await staker_1.getAddress(),
       0
     );
@@ -321,7 +321,7 @@ describe("RewardCheck", function () {
       await staker_1.getAddress(),
       0
     );
-    expect(stakeRecord.claimedRewards).to.equal(0);
+    expect(stakeRecord.claimedReward).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
   });
 
@@ -375,10 +375,9 @@ describe("RewardCheck", function () {
     await ethers.provider.send("evm_increaseTime", [SECONDS_IN_A_DAY * 25]);
     await ethers.provider.send("evm_mine");
 
-    const totalPendingRewards =
-      await stakingPool.calculateAllPendingRewardToken(
-        await staker_1.getAddress()
-      );
+    const totalPendingRewards = await stakingPool.calculateAllPendingReward(
+      await staker_1.getAddress()
+    );
 
     // 7 + 14
     expect(totalPendingRewards).to.be.equal(ethers.parseEther("21"));

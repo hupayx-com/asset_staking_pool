@@ -105,7 +105,7 @@ describe("UnStaking", function () {
     expect(stakeRecord.amountStaked).to.equal(
       ethers.parseEther(STAKING_AMOUNT_ETHER_730)
     );
-    expect(stakeRecord.claimedRewards).to.equal(0);
+    expect(stakeRecord.claimedReward).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord.tokenMultipliedPrice).to.equal(1000000);
     expect(stakeRecord.dailyInterestMultipliedPrice).to.equal(2000000n);
@@ -123,7 +123,7 @@ describe("UnStaking", function () {
     expect(stakeRecord.amountStaked).to.equal(
       ethers.parseEther(STAKING_AMOUNT_ETHER_365)
     );
-    expect(stakeRecord.claimedRewards).to.equal(0);
+    expect(stakeRecord.claimedReward).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord.tokenMultipliedPrice).to.equal(1000000);
     expect(stakeRecord.dailyInterestMultipliedPrice).to.equal(1000000n);
@@ -156,7 +156,7 @@ describe("UnStaking", function () {
     expect(stakeRecord.amountStaked).to.equal(
       ethers.parseEther(STAKING_AMOUNT_ETHER_730)
     );
-    expect(stakeRecord.claimedRewards).to.equal(0);
+    expect(stakeRecord.claimedReward).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord.tokenMultipliedPrice).to.equal(1000000);
     expect(stakeRecord.dailyInterestMultipliedPrice).to.equal(2000000n);
@@ -176,7 +176,7 @@ describe("UnStaking", function () {
     expect(stakeRecord.amountStaked).to.equal(
       ethers.parseEther(STAKING_AMOUNT_ETHER_365)
     );
-    expect(stakeRecord.claimedRewards).to.equal(0);
+    expect(stakeRecord.claimedReward).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord.tokenMultipliedPrice).to.equal(1000000);
     expect(stakeRecord.dailyInterestMultipliedPrice).to.equal(1000000n);

@@ -94,7 +94,7 @@ describe("Staking", function () {
     expect(stakeRecord.amountStaked).to.equal(
       ethers.parseEther(STAKING_AMOUNT_ETHER)
     );
-    expect(stakeRecord.claimedRewards).to.equal(0);
+    expect(stakeRecord.claimedReward).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord.tokenMultipliedPrice).to.equal(1000000);
     expect(stakeRecord.dailyInterestMultipliedPrice).to.equal(1000000n);
@@ -248,7 +248,7 @@ describe("Staking", function () {
     expect(stakeRecord_1.amountStaked).to.equal(
       ethers.parseEther(STAKING_AMOUNT_ETHER)
     );
-    expect(stakeRecord_1.claimedRewards).to.equal(0);
+    expect(stakeRecord_1.claimedReward).to.equal(0);
     expect(stakeRecord_1.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord_1.tokenMultipliedPrice).to.equal(1000000);
     expect(stakeRecord_1.dailyInterestMultipliedPrice).to.equal(1000000n);
@@ -260,7 +260,7 @@ describe("Staking", function () {
     expect(stakeRecord_2.amountStaked).to.equal(
       ethers.parseEther(STAKING_AMOUNT_ETHER_2)
     );
-    expect(stakeRecord_2.claimedRewards).to.equal(0);
+    expect(stakeRecord_2.claimedReward).to.equal(0);
     expect(stakeRecord_2.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord_2.tokenMultipliedPrice).to.equal(5000000);
     expect(stakeRecord_2.dailyInterestMultipliedPrice).to.equal(10000000n);
@@ -305,7 +305,7 @@ describe("Staking", function () {
     expect(stakeRecord_1.amountStaked).to.equal(
       ethers.parseEther(STAKING_AMOUNT_ETHER)
     );
-    expect(stakeRecord_1.claimedRewards).to.equal(0);
+    expect(stakeRecord_1.claimedReward).to.equal(0);
     expect(stakeRecord_1.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord_1.tokenMultipliedPrice).to.equal(1000000);
     expect(stakeRecord_1.dailyInterestMultipliedPrice).to.equal(1000000n);
@@ -317,7 +317,7 @@ describe("Staking", function () {
     expect(stakeRecord_2.amountStaked).to.equal(
       ethers.parseEther(STAKING_AMOUNT_ETHER_2)
     );
-    expect(stakeRecord_2.claimedRewards).to.equal(0);
+    expect(stakeRecord_2.claimedReward).to.equal(0);
     expect(stakeRecord_2.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord_2.tokenMultipliedPrice).to.equal(5000000);
     expect(stakeRecord_2.dailyInterestMultipliedPrice).to.equal(10000000n);

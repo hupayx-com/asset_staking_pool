@@ -141,12 +141,12 @@
 - `_amount (uint256)`: 언스테이킹 할 금액.
 - **시그니처:** `unStakeToken(uint256 _stakeIndex, uint256 _amount)`
 
-#### claimRewardToken(uint256 \_stakeIndex)
+#### claimReward(uint256 \_stakeIndex)
 
 - **설명:** 스테이킹 별 보상을 청구합니다.
 - **매개변수:**
 - `_stakeIndex (uint256)`: 스테이킹 인덱스.
-- **시그니처:** `claimRewardToken(uint256 _stakeIndex)`
+- **시그니처:** `claimReward(uint256 _stakeIndex)`
 
 #### withdrawAllPrincipal()
 
@@ -154,11 +154,11 @@
 - **매개변수:** 없음.
 - **시그니처:** `withdrawAllPrincipal()`
 
-#### claimAllRewardToken()
+#### claimAllReward()
 
 - **설명:** 사용자의 전체 보상을 요청합니다.
 - **매개변수:** 없음.
-- **시그니처:** `claimAllRewardToken()`
+- **시그니처:** `claimAllReward()`
 
 ### 조회 함수
 
@@ -168,27 +168,27 @@
 - **매개변수:** 없음.
 - **시그니처:** `getPoolDetails()`
 
-#### calculatePendingRewardToken(address \_user, uint256 \_stakeIndex)
+#### calculatePendingReward(address \_user, uint256 \_stakeIndex)
 
 - **설명:** 사용자가 받을 보상 금액과 다음 인덱스를 조회합니다.
 - **매개변수:**
 - `_user (address)`: 사용자 주소.
 - `_stakeIndex (uint256)`: 스테이킹 인덱스.
-- **시그니처:** `calculatePendingRewardToken(address _user, uint256 _stakeIndex)`
+- **시그니처:** `calculatePendingReward(address _user, uint256 _stakeIndex)`
 
-#### calculateAllPendingRewardToken(address \_staker)
+#### calculateAllPendingReward(address \_staker)
 
 - **설명:** 사용자가 받을 전체 보상 금액을 조회합니다.
 - **매개변수:**
 - `_staker (address)`: 사용자 주소.
-- **시그니처:** `calculateAllPendingRewardToken(address _staker)`
+- **시그니처:** `calculateAllPendingReward(address _staker)`
 
-#### calculateAllClaimedRewardToken(address \_staker)
+#### calculateAllClaimedReward(address \_staker)
 
 - **설명:** 사용자가 청구한 전체 보상 금액을 조회합니다.
 - **매개변수:**
 - `_staker (address)`: 사용자 주소.
-- **시그니처:** `calculateAllClaimedRewardToken(address _staker)`
+- **시그니처:** `calculateAllClaimedReward(address _staker)`
 
 #### getUserStakeCount(address \_user)
 

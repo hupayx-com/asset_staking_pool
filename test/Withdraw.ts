@@ -180,11 +180,11 @@ describe("WithdrawPrincipal (원금은 회수 시점 토큰 가격에 비례)", 
     await expect(
       stakingPool.connect(staker_1).withdrawAllPrincipal()
     ).to.be.revertedWith(
-      "Please claim all rewards before withdrawing principal"
+      "Please claim all reward before withdrawing principal"
     );
 
     // 보상 청구
-    await stakingPool.connect(staker_1).claimRewardToken(0);
+    await stakingPool.connect(staker_1).claimReward(0);
 
     // 원금 인출 시도
     await stakingPool.connect(owner).updateTokenMultipliedPrice(200000);
@@ -241,11 +241,11 @@ describe("WithdrawPrincipal (원금은 회수 시점 토큰 가격에 비례)", 
     await expect(
       stakingPool.connect(staker_1).withdrawAllPrincipal()
     ).to.be.revertedWith(
-      "Please claim all rewards before withdrawing principal"
+      "Please claim all reward before withdrawing principal"
     );
 
     // 보상 청구
-    await stakingPool.connect(staker_1).claimRewardToken(0);
+    await stakingPool.connect(staker_1).claimReward(0);
 
     // 원금 인출 시도
     await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000 * 5);
@@ -302,7 +302,7 @@ describe("WithdrawPrincipal (원금은 회수 시점 토큰 가격에 비례)", 
     await expect(
       stakingPool.connect(staker_1).withdrawAllPrincipal()
     ).to.be.revertedWith(
-      "Please claim all rewards before withdrawing principal"
+      "Please claim all reward before withdrawing principal"
     );
   });
 

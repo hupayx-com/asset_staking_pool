@@ -104,7 +104,7 @@ describe("RewardClaim (한 명의 사용자)", function () {
     // 보상 청구 전 사용자의 토큰 잔액 확인
     const initialBalance = await suffle.balanceOf(await staker_1.getAddress());
 
-    await stakingPool.connect(staker_1).claimRewardToken(0);
+    await stakingPool.connect(staker_1).claimReward(0);
 
     // 보상 청구 후 사용자의 토큰 잔액 확인
     const finalBalance = await suffle.balanceOf(await staker_1.getAddress());
@@ -119,7 +119,7 @@ describe("RewardClaim (한 명의 사용자)", function () {
       await staker_1.getAddress(),
       0
     );
-    expect(stakeRecord.claimedRewards).to.equal(ethers.parseEther("5"));
+    expect(stakeRecord.claimedReward).to.equal(ethers.parseEther("5"));
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(1);
   });
 
@@ -165,7 +165,7 @@ describe("RewardClaim (한 명의 사용자)", function () {
     // 보상 청구 전 사용자의 토큰 잔액 확인
     const initialBalance = await suffle.balanceOf(await staker_1.getAddress());
 
-    await stakingPool.connect(staker_1).claimRewardToken(0);
+    await stakingPool.connect(staker_1).claimReward(0);
 
     // 보상 청구 후 사용자의 토큰 잔액 확인
     const finalBalance = await suffle.balanceOf(await staker_1.getAddress());
@@ -181,7 +181,7 @@ describe("RewardClaim (한 명의 사용자)", function () {
       await staker_1.getAddress(),
       0
     );
-    expect(stakeRecord.claimedRewards).to.equal(ethers.parseEther("7"));
+    expect(stakeRecord.claimedReward).to.equal(ethers.parseEther("7"));
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(2);
   });
 
@@ -234,7 +234,7 @@ describe("RewardClaim (한 명의 사용자)", function () {
 
     // 보상 청구 시 오류 발생 확인
     await expect(
-      stakingPool.connect(staker_1).claimRewardToken(0)
+      stakingPool.connect(staker_1).claimReward(0)
     ).to.be.revertedWith("No reward available");
 
     // 보상 청구 후 사용자의 토큰 잔액 확인
@@ -250,7 +250,7 @@ describe("RewardClaim (한 명의 사용자)", function () {
       await staker_1.getAddress(),
       0
     );
-    expect(stakeRecord.claimedRewards).to.equal(ethers.parseEther("0"));
+    expect(stakeRecord.claimedReward).to.equal(ethers.parseEther("0"));
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
   });
 
@@ -296,7 +296,7 @@ describe("RewardClaim (한 명의 사용자)", function () {
     // 보상 청구 전 사용자의 토큰 잔액 확인
     const initialBalance = await suffle.balanceOf(await staker_1.getAddress());
 
-    await stakingPool.connect(staker_1).claimRewardToken(0);
+    await stakingPool.connect(staker_1).claimReward(0);
 
     // 보상 청구 후 사용자의 토큰 잔액 확인
     const finalBalance = await suffle.balanceOf(await staker_1.getAddress());
@@ -312,7 +312,7 @@ describe("RewardClaim (한 명의 사용자)", function () {
       await staker_1.getAddress(),
       0
     );
-    expect(stakeRecord.claimedRewards).to.equal(ethers.parseEther("5"));
+    expect(stakeRecord.claimedReward).to.equal(ethers.parseEther("5"));
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(1);
   });
 
@@ -368,7 +368,7 @@ describe("RewardClaim (한 명의 사용자)", function () {
     let initialBalance = await suffle.balanceOf(await staker_1.getAddress());
 
     // 보상 청구 시 오류 발생 확인
-    await stakingPool.connect(staker_1).claimRewardToken(0);
+    await stakingPool.connect(staker_1).claimReward(0);
 
     // 보상 청구 후 사용자의 토큰 잔액 확인
     let finalBalance = await suffle.balanceOf(await staker_1.getAddress());
@@ -383,7 +383,7 @@ describe("RewardClaim (한 명의 사용자)", function () {
       await staker_1.getAddress(),
       0
     );
-    expect(stakeRecord.claimedRewards).to.equal(ethers.parseEther("5"));
+    expect(stakeRecord.claimedReward).to.equal(ethers.parseEther("5"));
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(1);
 
     ///////////////////
@@ -397,7 +397,7 @@ describe("RewardClaim (한 명의 사용자)", function () {
     // 보상 청구 전 사용자의 토큰 잔액 확인
     initialBalance = await suffle.balanceOf(await staker_1.getAddress());
 
-    await stakingPool.connect(staker_1).claimRewardToken(0);
+    await stakingPool.connect(staker_1).claimReward(0);
 
     // 보상 청구 후 사용자의 토큰 잔액 확인
     finalBalance = await suffle.balanceOf(await staker_1.getAddress());
@@ -410,7 +410,7 @@ describe("RewardClaim (한 명의 사용자)", function () {
 
     stakeRecord = await stakingPool.userStakes(await staker_1.getAddress(), 0);
     // 5(1th) + 2(2th)
-    expect(stakeRecord.claimedRewards).to.equal(ethers.parseEther("7"));
+    expect(stakeRecord.claimedReward).to.equal(ethers.parseEther("7"));
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(2);
   });
 
@@ -461,7 +461,7 @@ describe("RewardClaim (한 명의 사용자)", function () {
     // 보상 청구 전 사용자의 토큰 잔액 확인
     const initialBalance = await suffle.balanceOf(await staker_1.getAddress());
 
-    await stakingPool.connect(staker_1).claimRewardToken(0);
+    await stakingPool.connect(staker_1).claimReward(0);
 
     // 보상 청구 후 사용자의 토큰 잔액 확인
     const finalBalance = await suffle.balanceOf(await staker_1.getAddress());
@@ -476,7 +476,7 @@ describe("RewardClaim (한 명의 사용자)", function () {
       await staker_1.getAddress(),
       0
     );
-    expect(stakeRecord.claimedRewards).to.equal(ethers.parseEther("2.5"));
+    expect(stakeRecord.claimedReward).to.equal(ethers.parseEther("2.5"));
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(1);
   });
 
@@ -525,13 +525,12 @@ describe("RewardClaim (한 명의 사용자)", function () {
     await ethers.provider.send("evm_mine");
 
     // 스테이킹의 보상 청구
-    await stakingPool.connect(staker_1).claimRewardToken(0);
-    await stakingPool.connect(staker_1).claimRewardToken(1);
+    await stakingPool.connect(staker_1).claimReward(0);
+    await stakingPool.connect(staker_1).claimReward(1);
 
-    const totalReceivedRewards =
-      await stakingPool.calculateAllClaimedRewardToken(
-        await staker_1.getAddress()
-      );
+    const totalReceivedRewards = await stakingPool.calculateAllClaimedReward(
+      await staker_1.getAddress()
+    );
 
     // 사용자가 받은 보상
     // 첫 번째 스테이킹(365): 20

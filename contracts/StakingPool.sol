@@ -85,7 +85,7 @@ contract StakingPool {
   struct StakeRecord {
     uint256 amountStaked; /// staking 수량
     uint256 stakeTime; /// staking 시점(Unix time)
-    uint256 claimedRewards; /// 받은 보상
+    uint256 claimedReward; /// 받은 보상
     uint256 pendingRewardScheduleIndex; /// 보상 스케줄 목록에서 받을 보상들 중 첫 번째 index
     uint256 tokenMultipliedPrice; /// staking 시점의 토큰 가격
     uint256 dailyInterestMultipliedPrice; /// 일 이자
@@ -438,7 +438,7 @@ contract StakingPool {
       StakeRecord({
         amountStaked: _amount,
         stakeTime: block.timestamp,
-        claimedRewards: 0,
+        claimedReward: 0,
         pendingRewardScheduleIndex: 0,
         tokenMultipliedPrice: currentTokenMultipliedPrice,
         dailyInterestMultipliedPrice: dailyInterestMultipliedPrice
@@ -493,12 +493,12 @@ contract StakingPool {
    * @notice staking 별 보상 요청 (운영/운영종료/운영중지 인 경우)
    * @param _stakeIndex 스테이킹 인덱스
    */
-  function claimRewardToken(uint256 _stakeIndex) public {
+  function claimReward(uint256 _stakeIndex) public {
     require(
       state == State.Operating ||
         state == State.Closed ||
         state == State.OperatingStopped,
-      "Invalid state for claiming rewards"
+      "Invalid state for claiming reward"
     );
 
     require(
@@ -506,14 +506,14 @@ contract StakingPool {
       "Invalid stakeToken index"
     );
 
-    (uint256 reward, uint256 nextIndex) = calculatePendingRewardToken(
+    (uint256 reward, uint256 nextIndex) = calculatePendingReward(
       msg.sender,
       _stakeIndex
     );
     require(reward > 0, "No reward available");
 
     StakeRecord storage userStake = userStakes[msg.sender][_stakeIndex];
-    userStake.claimedRewards += reward;
+    userStake.claimedReward += reward;
     userStake.pendingRewardScheduleIndex = nextIndex;
 
     IERC20(details.stakingToken).transfer(msg.sender, reward);
@@ -538,10 +538,10 @@ contract StakingPool {
 
     /// 모든 보상이 청구되었는지 확인
     for (uint256 i = 0; i < records.length; i++) {
-      (uint256 reward, ) = calculatePendingRewardToken(msg.sender, i);
+      (uint256 reward, ) = calculatePendingReward(msg.sender, i);
       require(
         reward == 0,
-        "Please claim all rewards before withdrawing principal"
+        "Please claim all reward before withdrawing principal"
       );
     }
 
@@ -561,14 +561,14 @@ contract StakingPool {
   /**
    * @notice 사용자의 전체 보상 요청
    */
-  function claimAllRewardToken() public {
-    require(state == State.Operating, "Invalid state for requesting rewards");
+  function claimAllReward() public {
+    require(state == State.Operating, "Invalid state for requesting reward");
 
     /// 보상 요청 로직
     StakeRecord[] storage records = userStakes[msg.sender];
 
     for (uint256 i = 0; i < records.length; i++) {
-      claimRewardToken(i);
+      claimReward(i);
     }
   }
 
@@ -586,7 +586,7 @@ contract StakingPool {
    * @param _stakeIndex 스테이킹 인덱스
    * @return 받을 보상 금액과 다음 인덱스
    */
-  function calculatePendingRewardToken(
+  function calculatePendingReward(
     address _user,
     uint256 _stakeIndex
   ) public view returns (uint256, uint256) {
@@ -645,17 +645,17 @@ contract StakingPool {
    * @param _staker 사용자 주소
    * @return 사용자가 받을 전체 보상 금액
    */
-  function calculateAllPendingRewardToken(
+  function calculateAllPendingReward(
     address _staker
   ) public view returns (uint256) {
-    require(state == State.Operating, "Invalid state for viewing rewards");
+    require(state == State.Operating, "Invalid state for viewing reward");
 
     // 보상 조회 로직
     uint256 totalReward = 0;
     StakeRecord[] storage records = userStakes[_staker];
 
     for (uint256 i = 0; i < records.length; i++) {
-      (uint256 reward, ) = calculatePendingRewardToken(_staker, i);
+      (uint256 reward, ) = calculatePendingReward(_staker, i);
       totalReward += reward;
     }
 
@@ -667,17 +667,17 @@ contract StakingPool {
    * @param _staker 사용자 주소
    * @return 사용자가 받은 전체 보상 금액
    */
-  function calculateAllClaimedRewardToken(
+  function calculateAllClaimedReward(
     address _staker
   ) public view returns (uint256) {
-    require(state == State.Operating, "Invalid state for viewing rewards");
+    require(state == State.Operating, "Invalid state for viewing reward");
 
     /// 누적 보상 조회 로직
     uint256 totalReward = 0;
     StakeRecord[] storage records = userStakes[_staker];
 
     for (uint256 i = 0; i < records.length; i++) {
-      totalReward += records[i].claimedRewards;
+      totalReward += records[i].claimedReward;
     }
 
     return totalReward;
