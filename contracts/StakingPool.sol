@@ -35,8 +35,8 @@ contract StakingPool {
 
   /// 소수점 계산을 위해 가격 x1,000,000 (ex. 2024년 4월 27일 SFL 가격: $0.002718)
   uint256 public constant PRICE_MULTIPLIER = 1e6;
-  /// 소수점 계산을 위해 연 이자율 x100 (ex. 이자율: 0.05 %)
-  uint256 public constant ANNUAL_INTEREST_RATE_MULTIPLIER = 100;
+  /// 소수점 계산을 위해 이자율 x100 (ex. 이자율: 0.05 %)
+  uint256 public constant RATE_MULTIPLIER = 100;
 
   /// default: wei
   /// staking token 의 소수점 자리수에 따라 변경 가능
@@ -432,7 +432,7 @@ contract StakingPool {
       currentTokenMultipliedPrice) * details.annualInterestMultipliedRate) /
       365 /* 1 year */ /
       tokenDecimals /
-      ANNUAL_INTEREST_RATE_MULTIPLIER;
+      RATE_MULTIPLIER;
 
     userStakes[msg.sender].push(
       StakeRecord({
@@ -475,7 +475,7 @@ contract StakingPool {
         record.tokenMultipliedPrice) * details.annualInterestMultipliedRate) /
         365 /* 1 year */ /
         tokenDecimals /
-        ANNUAL_INTEREST_RATE_MULTIPLIER;
+        RATE_MULTIPLIER;
 
       record.dailyInterestMultipliedPrice = dailyInterestMultipliedPrice;
     }
