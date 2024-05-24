@@ -1,11 +1,8 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-// Uncomment this line to use console.log
-// import "hardhat/console.sol";
-
 /**
- * @dev ERC20 표준 인터페이스를 정의한 인터페이스
+ * @dev ERC20(staking token) standard interface
  */
 interface IERC20 {
   /**
@@ -42,24 +39,26 @@ contract StakingPool {
   uint256 public constant ANNUAL_INTEREST_RATE_MULTIPLIER = 100;
 
   /// default: wei
+  /// staking token 의 소수점 자리수에 따라 변경 가능
   uint256 public tokenDecimals = 1e18;
 
+  /// 토큰 당 달러 가격 (ex. 토근 가격이 1 달러 인 경우 실제 값은 1 x PRICE_MULTIPLIER)
   /// 실시간 Token 가격 반영을 위해 외부에서 주기적으로 업데이트 필요
-  /// staking 시 현재 token 가격을 적용하여 연 이자율 계산
+  /// staking 시 해당 값을 적용하여 연 이자율 계산
   uint256 public currentMultipliedTokenPrice = 0;
 
-  /// 총 모금 금액
-  uint256 public totalFundraisingInMultipliedUSD = 0;
+  /// 총 모금 금액 (ex. 총 모금액이 100 달러 인 경우 실제 값은 100 x PRICE_MULTIPLIER)
+  uint256 public totalFundraisingMultipliedPrice = 0;
 
   /**
    * @dev 풀의 상태를 나타내는 열거형
    */
   enum State {
-    Waiting, /// 대기 (-> 모금)
-    Fundraising, /// 모금 (-> 운영/모금 잠김/모금 중지/모금 실패)
-    Operating, /// 운영 (-> 운영 종료/운영 중지)
+    Waiting, /// 대기 (next status: 모금)
+    Fundraising, /// 모금 (next status: 운영 or 모금 잠김 or 모금 중지 or 모금 실패)
+    Operating, /// 운영 (next status: 운영 종료 or 운영 중지)
     Closed, /// 운영 종료
-    Locked, /// 모금 잠김 (-> 운영)
+    Locked, /// 모금 잠김 (next status: 운영)
     FundraisingStopped, /// 모금 중지
     OperatingStopped, /// 운영 중지
     Failed /// 모금 실패
@@ -72,10 +71,10 @@ contract StakingPool {
   struct Details {
     string name; /// 이름
     string description; /// 설명
-    uint256 minStakeInUSD; /// 최소 스테이킹 금액
-    uint256 multipliedAnnualInterestRate; /// 연 이자율
-    uint256 minFundraisingInUSD; /// 최소 모금 금액
-    uint256 maxFundraisingInUSD; /// 최대 모금 금액
+    uint256 minStakePrice; /// 최소 스테이킹 금액
+    uint256 annualInterestMultipliedRate; /// 연 이자율
+    uint256 minFundraisingPrice; /// 최소 모금 금액
+    uint256 maxFundraisingPrice; /// 최대 모금 금액
     address stakingToken; /// staking token address
   }
   Details public details;
@@ -88,8 +87,8 @@ contract StakingPool {
     uint256 stakeTime; /// staking 시점(Unix time)
     uint256 claimedRewards; /// 받은 보상
     uint256 pendingRewardScheduleIndex; /// 보상 스케줄 목록에서 받을 보상들 중 첫 번째 index
-    uint256 multipliedTokenPrice; /// staking 시점의 토큰 가격
-    uint256 dailyInterestInUSD; /// 일 이자
+    uint256 tokenMultipliedPrice; /// staking 시점의 토큰 가격
+    uint256 dailyInterestPrice; /// 일 이자
   }
   /// 동일 사용자의 staking이라도 개별 관리
   mapping(address => StakeRecord[]) public userStakes;
@@ -199,7 +198,7 @@ contract StakingPool {
   function setMinStakePrice(uint256 _price) public onlyAdmin {
     require(state == State.Waiting, "Pool is not in Waiting state");
 
-    details.minStakeInUSD = _price;
+    details.minStakePrice = _price;
   }
 
   /**
@@ -211,7 +210,7 @@ contract StakingPool {
   ) public onlyAdmin {
     require(state == State.Waiting, "Pool is not in Waiting state");
 
-    details.multipliedAnnualInterestRate = _multipliedInterestRate;
+    details.annualInterestMultipliedRate = _multipliedInterestRate;
   }
 
   /**
@@ -221,7 +220,7 @@ contract StakingPool {
   function setMinFundraisingPrice(uint256 _price) public onlyAdmin {
     require(state == State.Waiting, "Pool is not in Waiting state");
 
-    details.minFundraisingInUSD = _price;
+    details.minFundraisingPrice = _price;
   }
 
   /**
@@ -231,7 +230,7 @@ contract StakingPool {
   function setMaxFundraisingPrice(uint256 _price) public onlyAdmin {
     require(state == State.Waiting, "Pool is not in Waiting state");
 
-    details.maxFundraisingInUSD = _price;
+    details.maxFundraisingPrice = _price;
   }
 
   /**
@@ -393,7 +392,7 @@ contract StakingPool {
     );
 
     /// 최소 스테이킹 금액 이상인지 확인
-    uint256 minStakeAmountInTokens = (details.minStakeInUSD *
+    uint256 minStakeAmountInTokens = (details.minStakePrice *
       tokenDecimals *
       PRICE_MULTIPLIER) / currentMultipliedTokenPrice;
 
@@ -405,19 +404,19 @@ contract StakingPool {
     /// 최대 모금액을 초과하지 않는지 확인
     uint256 stakingAmountInUSD = (_amount * currentMultipliedTokenPrice) /
       tokenDecimals;
-    uint256 newTotalFundraising = totalFundraisingInMultipliedUSD +
+    uint256 newTotalFundraising = totalFundraisingMultipliedPrice +
       stakingAmountInUSD;
     require(
-      newTotalFundraising <= details.maxFundraisingInUSD * PRICE_MULTIPLIER,
+      newTotalFundraising <= details.maxFundraisingPrice * PRICE_MULTIPLIER,
       "Amount exceeds the maximum fundraising amount"
     );
 
     /// 최대 모금액에 도달한 경우 풀 상태를 "Locked"으로 변경
-    if (newTotalFundraising == details.maxFundraisingInUSD * PRICE_MULTIPLIER) {
+    if (newTotalFundraising == details.maxFundraisingPrice * PRICE_MULTIPLIER) {
       state = State.Locked;
       emit PoolLocked();
     }
-    totalFundraisingInMultipliedUSD = newTotalFundraising;
+    totalFundraisingMultipliedPrice = newTotalFundraising;
 
     IERC20(details.stakingToken).transferFrom(
       msg.sender,
@@ -425,8 +424,8 @@ contract StakingPool {
       _amount
     );
 
-    uint256 dailyInterestInUSD = ((_amount * currentMultipliedTokenPrice) *
-      details.multipliedAnnualInterestRate) /
+    uint256 dailyInterestPrice = ((_amount * currentMultipliedTokenPrice) *
+      details.annualInterestMultipliedRate) /
       365 /* 1 year */ /
       PRICE_MULTIPLIER /
       ANNUAL_INTEREST_RATE_MULTIPLIER;
@@ -437,8 +436,8 @@ contract StakingPool {
         stakeTime: block.timestamp,
         claimedRewards: 0,
         pendingRewardScheduleIndex: 0,
-        multipliedTokenPrice: currentMultipliedTokenPrice,
-        dailyInterestInUSD: dailyInterestInUSD
+        tokenMultipliedPrice: currentMultipliedTokenPrice,
+        dailyInterestPrice: dailyInterestPrice
       })
     );
 
@@ -468,19 +467,19 @@ contract StakingPool {
     } else {
       record.amountStaked -= _amount;
 
-      uint256 dailyInterestInUSD = ((record.amountStaked *
-        record.multipliedTokenPrice) * details.multipliedAnnualInterestRate) /
+      uint256 dailyInterestPrice = ((record.amountStaked *
+        record.tokenMultipliedPrice) * details.annualInterestMultipliedRate) /
         365 /* 1 year */ /
         PRICE_MULTIPLIER /
         ANNUAL_INTEREST_RATE_MULTIPLIER;
 
-      record.dailyInterestInUSD = dailyInterestInUSD;
+      record.dailyInterestPrice = dailyInterestPrice;
     }
 
     IERC20(details.stakingToken).transfer(msg.sender, _amount);
 
-    totalFundraisingInMultipliedUSD -=
-      (_amount * record.multipliedTokenPrice) /
+    totalFundraisingMultipliedPrice -=
+      (_amount * record.tokenMultipliedPrice) /
       tokenDecimals;
 
     emit Unstaked(msg.sender, _amount);
@@ -544,7 +543,7 @@ contract StakingPool {
 
     for (uint256 i = 0; i < records.length; i++) {
       uint256 amount = (records[i].amountStaked *
-        records[i].multipliedTokenPrice) / currentMultipliedTokenPrice;
+        records[i].tokenMultipliedPrice) / currentMultipliedTokenPrice;
 
       totalAmount += amount;
       records[i].amountStaked = 0;
@@ -622,7 +621,7 @@ contract StakingPool {
         if (effectivestart < effectiveend) {
           uint256 stakingDays = (effectiveend - effectivestart) / 1 days;
 
-          reward += (((userStake.dailyInterestInUSD * stakingDays) /
+          reward += (((userStake.dailyInterestPrice * stakingDays) /
             schedule.multipliedTokenPriceAtPayout) * PRICE_MULTIPLIER);
         }
       }

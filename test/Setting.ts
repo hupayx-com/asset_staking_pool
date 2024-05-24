@@ -65,7 +65,7 @@ describe("StakingPool Admin Functions", function () {
     await stakingPool.setMinStakePrice(1000);
 
     const details = await stakingPool.getPoolDetails();
-    expect(details.minStakeInUSD).to.equal(1000);
+    expect(details.minStakePrice).to.equal(1000);
   });
 
   it("연 이자율 설정", async function () {
@@ -74,7 +74,7 @@ describe("StakingPool Admin Functions", function () {
     await stakingPool.setAnnualInterestRateMultiplier(5000);
 
     const details = await stakingPool.getPoolDetails();
-    expect(details.multipliedAnnualInterestRate).to.equal(5000);
+    expect(details.annualInterestMultipliedRate).to.equal(5000);
   });
 
   it("최소 모금 금액 설정", async function () {
@@ -83,7 +83,7 @@ describe("StakingPool Admin Functions", function () {
     await stakingPool.setMinFundraisingPrice(50000);
 
     const details = await stakingPool.getPoolDetails();
-    expect(details.minFundraisingInUSD).to.equal(50000);
+    expect(details.minFundraisingPrice).to.equal(50000);
   });
 
   it("최대 모금 금액 설정", async function () {
@@ -92,7 +92,7 @@ describe("StakingPool Admin Functions", function () {
     await stakingPool.setMaxFundraisingPrice(200000);
 
     const details = await stakingPool.getPoolDetails();
-    expect(details.maxFundraisingInUSD).to.equal(200000);
+    expect(details.maxFundraisingPrice).to.equal(200000);
   });
 
   it("스테이킹 토큰 주소 설정", async function () {

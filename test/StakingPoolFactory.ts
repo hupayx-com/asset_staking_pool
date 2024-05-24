@@ -86,14 +86,14 @@ describe("StakingPoolFactory", function () {
     // details 객체가 올바른 속성을 가지고 있는지 확인
     expect(details.name).to.be.a("string");
     expect(details.description).to.be.a("string");
-    expect(details.minStakeInUSD).to.be.a("bigint"); // BigInt 타입으로 체크
-    expect(details.minStakeInUSD).to.equal(BigInt(0)); // 예제에서는 0으로 초기화됨
-    expect(details.multipliedAnnualInterestRate).to.be.a("bigint"); // BigInt 타입으로 체크
-    expect(details.multipliedAnnualInterestRate).to.equal(BigInt(0)); // 예제에서는 0으로 초기화됨
-    expect(details.minFundraisingInUSD).to.be.a("bigint"); // BigInt 타입으로 체크
-    expect(details.minFundraisingInUSD).to.equal(BigInt(0)); // 예제에서는 0으로 초기화됨
-    expect(details.maxFundraisingInUSD).to.be.a("bigint"); // BigInt 타입으로 체크
-    expect(details.maxFundraisingInUSD).to.equal(BigInt(0)); // 예제에서는 0으로 초기화됨
+    expect(details.minStakePrice).to.be.a("bigint"); // BigInt 타입으로 체크
+    expect(details.minStakePrice).to.equal(BigInt(0)); // 예제에서는 0으로 초기화됨
+    expect(details.annualInterestMultipliedRate).to.be.a("bigint"); // BigInt 타입으로 체크
+    expect(details.annualInterestMultipliedRate).to.equal(BigInt(0)); // 예제에서는 0으로 초기화됨
+    expect(details.minFundraisingPrice).to.be.a("bigint"); // BigInt 타입으로 체크
+    expect(details.minFundraisingPrice).to.equal(BigInt(0)); // 예제에서는 0으로 초기화됨
+    expect(details.maxFundraisingPrice).to.be.a("bigint"); // BigInt 타입으로 체크
+    expect(details.maxFundraisingPrice).to.equal(BigInt(0)); // 예제에서는 0으로 초기화됨
 
     // expect(details.stakingToken).to.equal(ethers.constants.AddressZero); // 기본값이 AddressZero인지 확인
   });

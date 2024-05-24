@@ -107,8 +107,8 @@ describe("UnStaking", function () {
     );
     expect(stakeRecord.claimedRewards).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
-    expect(stakeRecord.multipliedTokenPrice).to.equal(1000000);
-    expect(stakeRecord.dailyInterestInUSD).to.equal(ethers.parseEther("2"));
+    expect(stakeRecord.tokenMultipliedPrice).to.equal(1000000);
+    expect(stakeRecord.dailyInterestPrice).to.equal(ethers.parseEther("2"));
 
     await stakingPool
       .connect(staker_1)
@@ -125,8 +125,8 @@ describe("UnStaking", function () {
     );
     expect(stakeRecord.claimedRewards).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
-    expect(stakeRecord.multipliedTokenPrice).to.equal(1000000);
-    expect(stakeRecord.dailyInterestInUSD).to.equal(ethers.parseEther("1"));
+    expect(stakeRecord.tokenMultipliedPrice).to.equal(1000000);
+    expect(stakeRecord.dailyInterestPrice).to.equal(ethers.parseEther("1"));
   });
 
   it("모금 기간에 일부 토큰을 언스테이킹 한다.", async function () {
@@ -158,8 +158,8 @@ describe("UnStaking", function () {
     );
     expect(stakeRecord.claimedRewards).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
-    expect(stakeRecord.multipliedTokenPrice).to.equal(1000000);
-    expect(stakeRecord.dailyInterestInUSD).to.equal(ethers.parseEther("2"));
+    expect(stakeRecord.tokenMultipliedPrice).to.equal(1000000);
+    expect(stakeRecord.dailyInterestPrice).to.equal(ethers.parseEther("2"));
 
     await stakingPool.connect(owner).updateMultipliedTokenPrice(2000000);
 
@@ -178,8 +178,8 @@ describe("UnStaking", function () {
     );
     expect(stakeRecord.claimedRewards).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
-    expect(stakeRecord.multipliedTokenPrice).to.equal(1000000);
-    expect(stakeRecord.dailyInterestInUSD).to.equal(ethers.parseEther("1"));
+    expect(stakeRecord.tokenMultipliedPrice).to.equal(1000000);
+    expect(stakeRecord.dailyInterestPrice).to.equal(ethers.parseEther("1"));
   });
 
   it("운영 기간내 토큰을 언스테이킹 하면 실패한다.", async function () {
@@ -295,9 +295,9 @@ describe("UnStaking", function () {
       .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER_1000));
 
     // 총 모금액 확인
-    let totalFundraisingInMultipliedUSD =
-      await stakingPool.totalFundraisingInMultipliedUSD();
-    expect(totalFundraisingInMultipliedUSD).to.equal(1000 * TOKEN_PRICE_USD); // 1,000 USD * 1,000,000
+    let totalFundraisingMultipliedPrice =
+      await stakingPool.totalFundraisingMultipliedPrice();
+    expect(totalFundraisingMultipliedPrice).to.equal(1000 * TOKEN_PRICE_USD); // 1,000 USD * 1,000,000
 
     // 언스테이킹
     await stakingPool
@@ -305,8 +305,8 @@ describe("UnStaking", function () {
       .unStakeToken(0, ethers.parseEther(UNSTAKING_AMOUNT_ETHER_500));
 
     // 총 모금액 확인
-    totalFundraisingInMultipliedUSD =
-      await stakingPool.totalFundraisingInMultipliedUSD();
-    expect(totalFundraisingInMultipliedUSD).to.equal(500 * TOKEN_PRICE_USD); // 500 USD * 1,000,000
+    totalFundraisingMultipliedPrice =
+      await stakingPool.totalFundraisingMultipliedPrice();
+    expect(totalFundraisingMultipliedPrice).to.equal(500 * TOKEN_PRICE_USD); // 500 USD * 1,000,000
   });
 });

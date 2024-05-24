@@ -96,8 +96,8 @@ describe("Staking", function () {
     );
     expect(stakeRecord.claimedRewards).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
-    expect(stakeRecord.multipliedTokenPrice).to.equal(1000000);
-    expect(stakeRecord.dailyInterestInUSD).to.equal(ethers.parseEther("1"));
+    expect(stakeRecord.tokenMultipliedPrice).to.equal(1000000);
+    expect(stakeRecord.dailyInterestPrice).to.equal(ethers.parseEther("1"));
   });
 
   it("최소 스테이킹 금액 이상 일때 스테이킹이 성공한다.", async function () {
@@ -250,8 +250,8 @@ describe("Staking", function () {
     );
     expect(stakeRecord_1.claimedRewards).to.equal(0);
     expect(stakeRecord_1.pendingRewardScheduleIndex).to.equal(0);
-    expect(stakeRecord_1.multipliedTokenPrice).to.equal(1000000);
-    expect(stakeRecord_1.dailyInterestInUSD).to.equal(ethers.parseEther("1"));
+    expect(stakeRecord_1.tokenMultipliedPrice).to.equal(1000000);
+    expect(stakeRecord_1.dailyInterestPrice).to.equal(ethers.parseEther("1"));
 
     const stakeRecord_2 = await stakingPool.userStakes(
       await staker_2.getAddress(),
@@ -262,8 +262,8 @@ describe("Staking", function () {
     );
     expect(stakeRecord_2.claimedRewards).to.equal(0);
     expect(stakeRecord_2.pendingRewardScheduleIndex).to.equal(0);
-    expect(stakeRecord_2.multipliedTokenPrice).to.equal(5000000);
-    expect(stakeRecord_2.dailyInterestInUSD).to.equal(ethers.parseEther("10"));
+    expect(stakeRecord_2.tokenMultipliedPrice).to.equal(5000000);
+    expect(stakeRecord_2.dailyInterestPrice).to.equal(ethers.parseEther("10"));
   });
 
   it("1 명의 사용자가 토큰을 2 번 스테이킹 한다.", async function () {
@@ -307,8 +307,8 @@ describe("Staking", function () {
     );
     expect(stakeRecord_1.claimedRewards).to.equal(0);
     expect(stakeRecord_1.pendingRewardScheduleIndex).to.equal(0);
-    expect(stakeRecord_1.multipliedTokenPrice).to.equal(1000000);
-    expect(stakeRecord_1.dailyInterestInUSD).to.equal(ethers.parseEther("1"));
+    expect(stakeRecord_1.tokenMultipliedPrice).to.equal(1000000);
+    expect(stakeRecord_1.dailyInterestPrice).to.equal(ethers.parseEther("1"));
 
     const stakeRecord_2 = await stakingPool.userStakes(
       await staker_1.getAddress(),
@@ -319,7 +319,7 @@ describe("Staking", function () {
     );
     expect(stakeRecord_2.claimedRewards).to.equal(0);
     expect(stakeRecord_2.pendingRewardScheduleIndex).to.equal(0);
-    expect(stakeRecord_2.multipliedTokenPrice).to.equal(5000000);
-    expect(stakeRecord_2.dailyInterestInUSD).to.equal(ethers.parseEther("10"));
+    expect(stakeRecord_2.tokenMultipliedPrice).to.equal(5000000);
+    expect(stakeRecord_2.dailyInterestPrice).to.equal(ethers.parseEther("10"));
   });
 });
