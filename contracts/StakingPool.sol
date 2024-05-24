@@ -88,7 +88,7 @@ contract StakingPool {
     uint256 claimedRewards; /// 받은 보상
     uint256 pendingRewardScheduleIndex; /// 보상 스케줄 목록에서 받을 보상들 중 첫 번째 index
     uint256 tokenMultipliedPrice; /// staking 시점의 토큰 가격
-    uint256 dailyInterestPrice; /// 일 이자
+    uint256 dailyInterestMultipliedPrice; /// 일 이자
   }
   /// 동일 사용자의 staking이라도 개별 관리
   mapping(address => StakeRecord[]) public userStakes;
@@ -424,10 +424,10 @@ contract StakingPool {
       _amount
     );
 
-    uint256 dailyInterestPrice = ((_amount * currentMultipliedTokenPrice) *
-      details.annualInterestMultipliedRate) /
+    uint256 dailyInterestMultipliedPrice = ((_amount *
+      currentMultipliedTokenPrice) * details.annualInterestMultipliedRate) /
       365 /* 1 year */ /
-      PRICE_MULTIPLIER /
+      tokenDecimals /
       ANNUAL_INTEREST_RATE_MULTIPLIER;
 
     userStakes[msg.sender].push(
@@ -437,7 +437,7 @@ contract StakingPool {
         claimedRewards: 0,
         pendingRewardScheduleIndex: 0,
         tokenMultipliedPrice: currentMultipliedTokenPrice,
-        dailyInterestPrice: dailyInterestPrice
+        dailyInterestMultipliedPrice: dailyInterestMultipliedPrice
       })
     );
 
@@ -467,13 +467,13 @@ contract StakingPool {
     } else {
       record.amountStaked -= _amount;
 
-      uint256 dailyInterestPrice = ((record.amountStaked *
+      uint256 dailyInterestMultipliedPrice = ((record.amountStaked *
         record.tokenMultipliedPrice) * details.annualInterestMultipliedRate) /
         365 /* 1 year */ /
-        PRICE_MULTIPLIER /
+        tokenDecimals /
         ANNUAL_INTEREST_RATE_MULTIPLIER;
 
-      record.dailyInterestPrice = dailyInterestPrice;
+      record.dailyInterestMultipliedPrice = dailyInterestMultipliedPrice;
     }
 
     IERC20(details.stakingToken).transfer(msg.sender, _amount);
@@ -621,8 +621,9 @@ contract StakingPool {
         if (effectivestart < effectiveend) {
           uint256 stakingDays = (effectiveend - effectivestart) / 1 days;
 
-          reward += (((userStake.dailyInterestPrice * stakingDays) /
-            schedule.multipliedTokenPriceAtPayout) * PRICE_MULTIPLIER);
+          reward += ((userStake.dailyInterestMultipliedPrice *
+            stakingDays *
+            tokenDecimals) / schedule.multipliedTokenPriceAtPayout);
         }
       }
 

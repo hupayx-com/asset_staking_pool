@@ -108,7 +108,7 @@ describe("UnStaking", function () {
     expect(stakeRecord.claimedRewards).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord.tokenMultipliedPrice).to.equal(1000000);
-    expect(stakeRecord.dailyInterestPrice).to.equal(ethers.parseEther("2"));
+    expect(stakeRecord.dailyInterestMultipliedPrice).to.equal(2000000n);
 
     await stakingPool
       .connect(staker_1)
@@ -126,7 +126,7 @@ describe("UnStaking", function () {
     expect(stakeRecord.claimedRewards).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord.tokenMultipliedPrice).to.equal(1000000);
-    expect(stakeRecord.dailyInterestPrice).to.equal(ethers.parseEther("1"));
+    expect(stakeRecord.dailyInterestMultipliedPrice).to.equal(1000000n);
   });
 
   it("모금 기간에 일부 토큰을 언스테이킹 한다.", async function () {
@@ -159,7 +159,7 @@ describe("UnStaking", function () {
     expect(stakeRecord.claimedRewards).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord.tokenMultipliedPrice).to.equal(1000000);
-    expect(stakeRecord.dailyInterestPrice).to.equal(ethers.parseEther("2"));
+    expect(stakeRecord.dailyInterestMultipliedPrice).to.equal(2000000n);
 
     await stakingPool.connect(owner).updateMultipliedTokenPrice(2000000);
 
@@ -179,7 +179,7 @@ describe("UnStaking", function () {
     expect(stakeRecord.claimedRewards).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord.tokenMultipliedPrice).to.equal(1000000);
-    expect(stakeRecord.dailyInterestPrice).to.equal(ethers.parseEther("1"));
+    expect(stakeRecord.dailyInterestMultipliedPrice).to.equal(1000000n);
   });
 
   it("운영 기간내 토큰을 언스테이킹 하면 실패한다.", async function () {
