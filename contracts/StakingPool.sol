@@ -45,7 +45,7 @@ contract StakingPool {
   /// 토큰 당 달러 가격 (ex. 토근 가격이 1 달러 인 경우 실제 값은 1 x PRICE_MULTIPLIER)
   /// 실시간 Token 가격 반영을 위해 외부에서 주기적으로 업데이트 필요
   /// staking 시 해당 값을 적용하여 연 이자율 계산
-  uint256 public currentMultipliedTokenPrice = 0;
+  uint256 public currentTokenMultipliedPrice = 0;
 
   /// 총 모금 금액 (ex. 총 모금액이 100 달러 인 경우 실제 값은 100 x PRICE_MULTIPLIER)
   uint256 public totalFundraisingMultipliedPrice = 0;
@@ -97,7 +97,7 @@ contract StakingPool {
    * @dev 보상 스케줄을 정의하는 구조체
    */
   struct RewardSchedule {
-    uint256 multipliedTokenPriceAtPayout; /// 보상 시 적용될 토큰 가격
+    uint256 tokenMultipliedPriceAtPayout; /// 보상 시 적용될 토큰 가격
     uint256 start; /// 보상 시작 시점(Unix time)
     uint256 end; /// 보상 종료 시점(Unix time)
   }
@@ -112,12 +112,12 @@ contract StakingPool {
   event Staked(address indexed user, uint256 amount);
   event Unstaked(address indexed user, uint256 amount);
   event RewardScheduleAdded(
-    uint256 multipliedTokenPriceAtPayout,
+    uint256 tokenMultipliedPriceAtPayout,
     uint256 start,
     uint256 end
   );
   event RewardClaimed(address indexed user, uint256 reward);
-  event MultipliedTokenPriceUpdated(uint256 newPrice);
+  event TokenMultipliedPriceUpdated(uint256 newPrice);
   event PrincipalWithdrawn(address indexed user, uint256 totalAmount);
 
   event FundraisingStarted();
@@ -247,19 +247,19 @@ contract StakingPool {
    * @notice 실시간 Token 가격을 외부에서 주기적으로 업데이트 한다.
    * @param _price 새로운 Token 가격
    */
-  function updateMultipliedTokenPrice(uint256 _price) external onlyAdmin {
-    currentMultipliedTokenPrice = _price;
-    emit MultipliedTokenPriceUpdated(_price);
+  function updateTokenMultipliedPrice(uint256 _price) external onlyAdmin {
+    currentTokenMultipliedPrice = _price;
+    emit TokenMultipliedPriceUpdated(_price);
   }
 
   /**
    * @notice 보상 스케줄을 추가한다.
-   * @param _multipliedTokenPriceAtPayout 보상 시 적용될 토큰 가격
+   * @param _tokenMultipliedPriceAtPayout 보상 시 적용될 토큰 가격
    * @param _start 보상 시작 시점(Unix time)
    * @param _end 보상 종료 시점(Unix time)
    */
   function addRewardSchedule(
-    uint256 _multipliedTokenPriceAtPayout,
+    uint256 _tokenMultipliedPriceAtPayout,
     uint256 _start,
     uint256 _end
   ) external onlyAdmin {
@@ -273,13 +273,13 @@ contract StakingPool {
 
     rewardSchedules.push(
       RewardSchedule({
-        multipliedTokenPriceAtPayout: _multipliedTokenPriceAtPayout,
+        tokenMultipliedPriceAtPayout: _tokenMultipliedPriceAtPayout,
         start: _start,
         end: _end
       })
     );
 
-    emit RewardScheduleAdded(_multipliedTokenPriceAtPayout, _start, _end);
+    emit RewardScheduleAdded(_tokenMultipliedPriceAtPayout, _start, _end);
   }
 
   /////////////////////////////
@@ -394,7 +394,7 @@ contract StakingPool {
     /// 최소 스테이킹 금액 이상인지 확인
     uint256 minStakeAmountInTokens = (details.minStakePrice *
       tokenDecimals *
-      PRICE_MULTIPLIER) / currentMultipliedTokenPrice;
+      PRICE_MULTIPLIER) / currentTokenMultipliedPrice;
 
     require(
       _amount >= minStakeAmountInTokens,
@@ -402,21 +402,25 @@ contract StakingPool {
     );
 
     /// 최대 모금액을 초과하지 않는지 확인
-    uint256 stakingAmountInUSD = (_amount * currentMultipliedTokenPrice) /
+    uint256 stakingMultipliedPrice = (_amount * currentTokenMultipliedPrice) /
       tokenDecimals;
-    uint256 newTotalFundraising = totalFundraisingMultipliedPrice +
-      stakingAmountInUSD;
+    uint256 newTotalFundraisingMultipliedPrice = totalFundraisingMultipliedPrice +
+        stakingMultipliedPrice;
     require(
-      newTotalFundraising <= details.maxFundraisingPrice * PRICE_MULTIPLIER,
+      newTotalFundraisingMultipliedPrice <=
+        details.maxFundraisingPrice * PRICE_MULTIPLIER,
       "Amount exceeds the maximum fundraising amount"
     );
 
     /// 최대 모금액에 도달한 경우 풀 상태를 "Locked"으로 변경
-    if (newTotalFundraising == details.maxFundraisingPrice * PRICE_MULTIPLIER) {
+    if (
+      newTotalFundraisingMultipliedPrice ==
+      details.maxFundraisingPrice * PRICE_MULTIPLIER
+    ) {
       state = State.Locked;
       emit PoolLocked();
     }
-    totalFundraisingMultipliedPrice = newTotalFundraising;
+    totalFundraisingMultipliedPrice = newTotalFundraisingMultipliedPrice;
 
     IERC20(details.stakingToken).transferFrom(
       msg.sender,
@@ -425,7 +429,7 @@ contract StakingPool {
     );
 
     uint256 dailyInterestMultipliedPrice = ((_amount *
-      currentMultipliedTokenPrice) * details.annualInterestMultipliedRate) /
+      currentTokenMultipliedPrice) * details.annualInterestMultipliedRate) /
       365 /* 1 year */ /
       tokenDecimals /
       ANNUAL_INTEREST_RATE_MULTIPLIER;
@@ -436,7 +440,7 @@ contract StakingPool {
         stakeTime: block.timestamp,
         claimedRewards: 0,
         pendingRewardScheduleIndex: 0,
-        tokenMultipliedPrice: currentMultipliedTokenPrice,
+        tokenMultipliedPrice: currentTokenMultipliedPrice,
         dailyInterestMultipliedPrice: dailyInterestMultipliedPrice
       })
     );
@@ -543,7 +547,7 @@ contract StakingPool {
 
     for (uint256 i = 0; i < records.length; i++) {
       uint256 amount = (records[i].amountStaked *
-        records[i].tokenMultipliedPrice) / currentMultipliedTokenPrice;
+        records[i].tokenMultipliedPrice) / currentTokenMultipliedPrice;
 
       totalAmount += amount;
       records[i].amountStaked = 0;
@@ -623,7 +627,7 @@ contract StakingPool {
 
           reward += ((userStake.dailyInterestMultipliedPrice *
             stakingDays *
-            tokenDecimals) / schedule.multipliedTokenPriceAtPayout);
+            tokenDecimals) / schedule.tokenMultipliedPriceAtPayout);
         }
       }
 

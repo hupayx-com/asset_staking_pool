@@ -48,7 +48,7 @@ describe("RewardClaim (다수의 사용자)", function () {
 
     await stakingPool.setStakingToken(suffle.getAddress());
     await stakingPool.setAnnualInterestRateMultiplier(100); // 연 이율 1%
-    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000);
+    await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
     await stakingPool.setMaxFundraisingPrice(10000);
 
     // faucet for staking
@@ -79,7 +79,7 @@ describe("RewardClaim (다수의 사용자)", function () {
     await stakingPool.connect(owner).startFundraising();
     await stakingPool.connect(owner).startOperating();
 
-    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000);
+    await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
 
     const STAKING_AMOUNT_1 = "365";
     const STAKING_AMOUNT_2 = "730";
@@ -140,7 +140,7 @@ describe("RewardClaim (다수의 사용자)", function () {
     await stakingPool.connect(owner).startFundraising();
     await stakingPool.connect(owner).startOperating();
 
-    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000);
+    await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
 
     const STAKING_AMOUNT_1 = "365";
     const STAKING_AMOUNT_2 = "730";
@@ -201,7 +201,7 @@ describe("RewardClaim (다수의 사용자)", function () {
     await stakingPool.connect(owner).startFundraising();
     await stakingPool.connect(owner).startOperating();
 
-    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000);
+    await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
 
     const STAKING_AMOUNT_1 = "365";
     const STAKING_AMOUNT_2 = "730";

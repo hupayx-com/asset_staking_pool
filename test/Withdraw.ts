@@ -48,7 +48,7 @@ describe("WithdrawPrincipal (원금은 회수 시점 토큰 가격에 비례)", 
 
     await stakingPool.setStakingToken(await suffle.getAddress());
     await stakingPool.setAnnualInterestRateMultiplier(100); // 연 이율 1%
-    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000);
+    await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
     await stakingPool.setMaxFundraisingPrice(10000);
 
     // faucet for staking
@@ -94,7 +94,7 @@ describe("WithdrawPrincipal (원금은 회수 시점 토큰 가격에 비례)", 
       .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER));
 
     await stakingPool.connect(owner).stopPoolFundraising();
-    await stakingPool.connect(owner).updateMultipliedTokenPrice(100000);
+    await stakingPool.connect(owner).updateTokenMultipliedPrice(100000);
 
     await stakingPool.connect(staker_1).withdrawAllPrincipal();
 
@@ -127,7 +127,7 @@ describe("WithdrawPrincipal (원금은 회수 시점 토큰 가격에 비례)", 
 
     await stakingPool.connect(owner).failPool();
 
-    await stakingPool.connect(owner).updateMultipliedTokenPrice(500000);
+    await stakingPool.connect(owner).updateTokenMultipliedPrice(500000);
     await stakingPool.connect(staker_1).withdrawAllPrincipal();
 
     const stakerBalance = await suffle.balanceOf(await staker_1.getAddress());
@@ -187,7 +187,7 @@ describe("WithdrawPrincipal (원금은 회수 시점 토큰 가격에 비례)", 
     await stakingPool.connect(staker_1).claimRewardToken(0);
 
     // 원금 인출 시도
-    await stakingPool.connect(owner).updateMultipliedTokenPrice(200000);
+    await stakingPool.connect(owner).updateTokenMultipliedPrice(200000);
     await stakingPool.connect(staker_1).withdrawAllPrincipal();
 
     const stakerBalance = await suffle.balanceOf(await staker_1.getAddress());
@@ -248,7 +248,7 @@ describe("WithdrawPrincipal (원금은 회수 시점 토큰 가격에 비례)", 
     await stakingPool.connect(staker_1).claimRewardToken(0);
 
     // 원금 인출 시도
-    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000 * 5);
+    await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000 * 5);
     await stakingPool.connect(staker_1).withdrawAllPrincipal();
 
     const stakerBalance = await suffle.balanceOf(await staker_1.getAddress());

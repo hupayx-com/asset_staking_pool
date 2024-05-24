@@ -64,21 +64,21 @@
 - `_tokenAddress (address)`: 토큰 주소.
 - **시그니처:** `setStakingToken(address _tokenAddress)`
 
-#### updateMultipliedTokenPrice(uint256 \_price)
+#### updateTokenMultipliedPrice(uint256 \_price)
 
 - **설명:** 실시간 토큰 가격을 업데이트합니다.
 - **매개변수:**
 - `_price (uint256)`: 새로운 토큰 가격.
-- **시그니처:** `updateMultipliedTokenPrice(uint256 _price)`
+- **시그니처:** `updateTokenMultipliedPrice(uint256 _price)`
 
-#### addRewardSchedule(uint256 \_multipliedTokenPriceAtPayout, uint256 \_start, uint256 \_end)
+#### addRewardSchedule(uint256 \_tokenMultipliedPriceAtPayout, uint256 \_start, uint256 \_end)
 
 - **설명:** 보상 스케줄을 추가합니다.
 - **매개변수:**
-- `_multipliedTokenPriceAtPayout (uint256)`: 보상 시 적용될 토큰 가격.
+- `_tokenMultipliedPriceAtPayout (uint256)`: 보상 시 적용될 토큰 가격.
 - `_start (uint256)`: 보상 시작 시점(Unix time).
 - `_end (uint256)`: 보상 종료 시점(Unix time).
-- **시그니처:** `addRewardSchedule(uint256 _multipliedTokenPriceAtPayout, uint256 _start, uint256 _end)`
+- **시그니처:** `addRewardSchedule(uint256 _tokenMultipliedPriceAtPayout, uint256 _start, uint256 _end)`
 
 ### 상태 변경 함수
 

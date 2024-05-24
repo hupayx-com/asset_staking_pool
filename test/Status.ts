@@ -46,7 +46,7 @@ describe("Status", function () {
 
     await stakingPool.setStakingToken(suffle.getAddress());
     await stakingPool.setAnnualInterestRateMultiplier(100); // 연 이율 1%
-    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000);
+    await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
 
     // faucet for staking
     await suffle.transfer(

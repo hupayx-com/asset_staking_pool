@@ -109,9 +109,9 @@ describe("StakingPool Admin Functions", function () {
   it("실시간 토큰 가격 업데이트", async function () {
     const { stakingPool, owner } = await deployStakingPoolFixture();
 
-    await stakingPool.connect(owner).updateMultipliedTokenPrice(1500000);
+    await stakingPool.connect(owner).updateTokenMultipliedPrice(1500000);
 
-    const currentPrice = await stakingPool.currentMultipliedTokenPrice();
+    const currentPrice = await stakingPool.currentTokenMultipliedPrice();
     expect(currentPrice).to.equal(1500000);
   });
 
@@ -129,7 +129,7 @@ describe("StakingPool Admin Functions", function () {
       .withArgs(1500000, start, end);
 
     const rewardSchedule = await stakingPool.rewardSchedules(0);
-    expect(rewardSchedule.multipliedTokenPriceAtPayout).to.equal(1500000);
+    expect(rewardSchedule.tokenMultipliedPriceAtPayout).to.equal(1500000);
     expect(rewardSchedule.start).to.equal(start);
     expect(rewardSchedule.end).to.equal(end);
   });

@@ -46,7 +46,7 @@ describe("Staking", function () {
 
     await stakingPool.setStakingToken(suffle.getAddress());
     await stakingPool.setAnnualInterestRateMultiplier(100); // 연 이율 1%
-    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000);
+    await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
     await stakingPool.setMaxFundraisingPrice(10000);
 
     // faucet for staking
@@ -109,7 +109,7 @@ describe("Staking", function () {
     // staking 은 모금/운영 시에만 가능
     await stakingPool.connect(owner).startFundraising();
 
-    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000);
+    await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
 
     const STAKING_AMOUNT_ETHER_364 = "364";
     await suffle
@@ -145,7 +145,7 @@ describe("Staking", function () {
     // staking 은 모금/운영 시에만 가능
     await stakingPool.connect(owner).startFundraising();
 
-    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000);
+    await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
 
     const STAKING_AMOUNT_ETHER_950 = "950";
     await suffle
@@ -181,7 +181,7 @@ describe("Staking", function () {
     // staking 은 모금/운영 시에만 가능
     await stakingPool.connect(owner).startFundraising();
 
-    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000);
+    await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
 
     const STAKING_AMOUNT_ETHER_950 = "950";
     await suffle
@@ -229,7 +229,7 @@ describe("Staking", function () {
       .connect(staker_1)
       .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER));
 
-    await stakingPool.connect(owner).updateMultipliedTokenPrice(5000000);
+    await stakingPool.connect(owner).updateTokenMultipliedPrice(5000000);
 
     await suffle
       .connect(staker_2)
@@ -286,7 +286,7 @@ describe("Staking", function () {
       .connect(staker_1)
       .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER));
 
-    await stakingPool.connect(owner).updateMultipliedTokenPrice(5000000);
+    await stakingPool.connect(owner).updateTokenMultipliedPrice(5000000);
 
     await suffle
       .connect(staker_1)

@@ -45,7 +45,7 @@ describe("UnStaking", function () {
 
     await stakingPool.setStakingToken(suffle.getAddress());
     await stakingPool.setAnnualInterestRateMultiplier(100); // 연 이율 1%
-    await stakingPool.connect(owner).updateMultipliedTokenPrice(1000000);
+    await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
     await stakingPool.setMaxFundraisingPrice(10000);
 
     // faucet for staking
@@ -161,7 +161,7 @@ describe("UnStaking", function () {
     expect(stakeRecord.tokenMultipliedPrice).to.equal(1000000);
     expect(stakeRecord.dailyInterestMultipliedPrice).to.equal(2000000n);
 
-    await stakingPool.connect(owner).updateMultipliedTokenPrice(2000000);
+    await stakingPool.connect(owner).updateTokenMultipliedPrice(2000000);
 
     await stakingPool
       .connect(staker_1)
@@ -281,7 +281,7 @@ describe("UnStaking", function () {
 
     await stakingPool
       .connect(owner)
-      .updateMultipliedTokenPrice(TOKEN_PRICE_USD);
+      .updateTokenMultipliedPrice(TOKEN_PRICE_USD);
 
     // 스테이킹
     await suffle
