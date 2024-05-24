@@ -158,6 +158,21 @@ contract StakingPool {
   }
 
   /**
+   * @notice 스테이킹된 토큰을 관리자 권한으로 전송
+   * @param _recipient 받는 주소
+   * @param _amount 전송할 토큰의 양
+   */
+  function transferStakingToken(
+    address _recipient,
+    uint256 _amount
+  ) external onlyAdmin {
+    require(_recipient != address(0), "Recipient address cannot be zero");
+    require(_amount > 0, "Amount must be greater than zero");
+
+    IERC20(details.stakingToken).transfer(_recipient, _amount);
+  }
+
+  /**
    * @notice Pool 이름 설정
    * @param _name 풀 이름
    */
