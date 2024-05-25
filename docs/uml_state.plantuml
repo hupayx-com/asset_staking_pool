@@ -1,0 +1,16 @@
+@startuml
+[*] --> 대기
+
+대기 --> 모금진행 : startFundraising
+
+모금진행 --> 모금잠김 : lockFundraising
+모금진행 --> 운영 : startOperating
+모금진행 --> 모금중지 : stopFundraising
+모금진행 --> 모금실패 : failFundraising
+
+모금잠김 --> 운영 : startOperating
+
+운영 --> 운영종료 : closeOperating
+운영 --> 운영중지 : stopOperating
+
+@enduml

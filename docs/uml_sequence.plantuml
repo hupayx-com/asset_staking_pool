@@ -1,0 +1,148 @@
+@startuml
+
+actor Admin as admin
+actor User as user
+participant StakingToken as stakingToken
+participant StakingPool as stakingPool
+participant StakingPoolFactory as factory
+
+== Staking Pool Creation ==
+
+admin -> factory: createPool()
+activate factory
+factory -> stakingPool: new StakingPool(admin)
+activate stakingPool
+factory -> admin: pool created (address)
+deactivate stakingPool
+deactivate factory
+
+== Initialization by Admin (Waiting state) ==
+
+admin -> stakingPool: setPoolName("Test Pool")
+activate stakingPool
+deactivate stakingPool
+
+admin -> stakingPool: setPoolDescription("This is a test pool")
+activate stakingPool
+deactivate stakingPool
+
+admin -> stakingPool: setMinStakePrice(365)
+activate stakingPool
+deactivate stakingPool
+
+admin -> stakingPool: setAnnualInterestRateMultiplier(100)
+activate stakingPool
+deactivate stakingPool
+
+admin -> stakingPool: setMinFundraisingPrice(50000)
+activate stakingPool
+deactivate stakingPool
+
+admin -> stakingPool: setMaxFundraisingPrice(10000000)
+activate stakingPool
+deactivate stakingPool
+
+admin -> stakingPool: setStakingToken(stakingToken)
+activate stakingPool
+deactivate stakingPool
+
+admin -> stakingPool: updateTokenMultipliedPrice(1000000)
+activate stakingPool
+stakingPool -> admin: <<event>> TokenMultipliedPriceUpdated
+deactivate stakingPool
+
+== Fundraising Start (Fundraising state) ==
+
+admin -> stakingPool: startFundraising()
+activate stakingPool
+note over stakingPool: state = Fundraising
+stakingPool -> admin: <<event>> FundraisingStarted
+deactivate stakingPool
+
+== User Stake Tokens (Fundraising state) ==
+
+user -> stakingToken: approve(stakingPool, 365 tokens)
+activate stakingToken
+deactivate stakingToken
+
+user -> stakingPool: stakeToken(365 tokens)
+activate stakingPool
+stakingPool -> stakingToken: transferFrom(user, stakingPool, 365 tokens)
+activate stakingToken
+deactivate stakingToken
+stakingPool -> user: <<event>> Staked
+deactivate stakingPool
+
+== Unstaking Tokens (Fundraising state) ==
+
+user -> stakingPool: unStakeToken(0, 100 tokens)
+activate stakingPool
+stakingPool -> stakingToken: transfer(user, 100 tokens)
+activate stakingToken
+deactivate stakingToken
+stakingPool -> user: <<event>> Unstaked
+deactivate stakingPool
+
+== Fundraising End & Operating Start (Operating state) ==
+
+admin -> stakingPool: startOperating()
+activate stakingPool
+note over stakingPool: state = Operating
+stakingPool -> admin: <<event>> OperatingStarted
+deactivate stakingPool
+
+== User Stake Tokens (Operating state) ==
+
+user -> stakingToken: approve(stakingPool, 365 tokens)
+activate stakingToken
+deactivate stakingToken
+
+user -> stakingPool: stakeToken(365 tokens)
+activate stakingPool
+stakingPool -> stakingToken: transferFrom(user, stakingPool, 365 tokens)
+activate stakingToken
+deactivate stakingToken
+stakingPool -> user: <<event>> Staked
+deactivate stakingPool
+
+== Admin Add First Reward Schedule (Operating state) ==
+
+admin -> stakingPool: addRewardSchedule(2000000, start, end)
+activate stakingPool
+stakingPool -> admin: <<event>> RewardScheduleAdded
+deactivate stakingPool
+
+== Admin Add Second Reward Schedule (Operating state) ==
+
+admin -> stakingPool: addRewardSchedule(2100000, start2, end2)
+activate stakingPool
+stakingPool -> admin: <<event>> RewardScheduleAdded
+deactivate stakingPool
+
+== User Claim Reward (Operating state) ==
+
+user -> stakingPool: claimReward(stakeIndex)
+activate stakingPool
+stakingPool -> user: <<event>> RewardClaimed
+stakingPool -> stakingToken: transfer(user, reward)
+activate stakingToken
+deactivate stakingToken
+deactivate stakingPool
+
+== Operating End & Withdraw Principal (OperatingClosed/Stopped state) ==
+
+admin -> stakingPool: closeOperating() or stopOperating()
+activate stakingPool
+note over stakingPool: state = OperatingClosed/OperatingStopped
+stakingPool -> admin: <<event>> OperatingClosed or OperatingStopped
+deactivate stakingPool
+
+user -> stakingPool: withdrawAllPrincipal()
+activate stakingPool
+stakingPool -> user: <<event>> PrincipalWithdrawn
+stakingPool -> stakingToken: transfer(user, principal equivalent tokens)
+activate stakingToken
+deactivate stakingToken
+deactivate stakingPool
+
+@enduml
