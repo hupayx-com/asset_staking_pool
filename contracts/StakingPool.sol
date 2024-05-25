@@ -53,27 +53,27 @@ contract StakingPool {
    * @dev Pool 의 상태를 나타내는 열거형
    */
   enum State {
-    Waiting, /// 대기 (next status: 모금)
-    Fundraising, /// 모금 (next status: 운영 or 모금 잠김 or 모금 중지 or 모금 실패)
-    FundraisingLocked, /// 모금 잠김 (next status: 운영)
+    Waiting, /// 대기 (다음 상태: 모금)
+    Fundraising, /// 모금 진행 (다음 상태: 운영 or 모금 잠김 or 모금 중지 or 모금 실패)
+    FundraisingLocked, /// 모금 잠김 (다음 상태: 운영)
     FundraisingStopped, /// 모금 중지
     FundraisingFailed, /// 모금 실패
-    Operating, /// 운영 (next status: 운영 종료 or 운영 중지)
+    Operating, /// 운영 (다음 상태: 운영 종료 or 운영 중지)
     OperatingClosed, /// 운영 종료
     OperatingStopped /// 운영 중지
   }
   State public state;
 
   /**
-   * @dev 풀의 세부사항을 나타내는 구조체
+   * @dev Pool 의 세부사항을 나타내는 구조체
    */
   struct Details {
     string name; /// 이름
     string description; /// 설명
     uint256 minStakePrice; /// 최소 스테이킹 금액
-    uint256 annualInterestMultipliedRate; /// 연 이자율
     uint256 minFundraisingPrice; /// 최소 모금 금액
     uint256 maxFundraisingPrice; /// 최대 모금 금액
+    uint256 annualInterestMultipliedRate; /// 연이율
     address stakingToken; /// staking token address
   }
   Details public details;
@@ -82,14 +82,14 @@ contract StakingPool {
    * @dev 스테이킹 정보를 저장하는 구조체
    */
   struct StakeRecord {
-    uint256 amountStaked; /// staking 수량
-    uint256 stakeTime; /// staking 시점(Unix time)
+    uint256 amountStaked; /// 스테이킹 수량
+    uint256 stakeTime; /// 스테이킹 시점(Unix time)
     uint256 claimedReward; /// 받은 보상
     uint256 pendingRewardScheduleIndex; /// 보상 스케줄 목록에서 받을 보상들 중 첫 번째 index
     uint256 tokenMultipliedPrice; /// staking 시점의 토큰 가격
     uint256 dailyInterestMultipliedPrice; /// 일 이자
   }
-  /// 동일 사용자의 staking이라도 개별 관리
+  /// 동일 사용자의 스테이킹 이라도 개별 관리
   mapping(address => StakeRecord[]) public userStakes;
 
   /**
@@ -102,34 +102,36 @@ contract StakingPool {
   }
   /// 보상 스케줄 목록
   /// 보상 시점마다 외부에서 해당 스케줄을 추가한다.
-  /// ex) 1년간 매월 보상을 준다면 보상 기간이 연속되는 총 12개의 목록이 필요
+  /// ex) 1년간 매월 15일 보상을 주는 경우, 매월 15일 마다 보상 스케줄을 추가하여 총 12 개의 목록이 필요
   RewardSchedule[] public rewardSchedules;
 
   /**
    * @dev 이벤트 정의
    */
-  event Staked(address indexed user, uint256 amount);
-  event Unstaked(address indexed user, uint256 amount);
+  event TokenMultipliedPriceUpdated(uint256 newPrice);
   event RewardScheduleAdded(
     uint256 tokenMultipliedPriceAtPayout,
     uint256 start,
     uint256 end
   );
+  event Staked(address indexed user, uint256 amount);
+  event Unstaked(address indexed user, uint256 amount);
   event RewardClaimed(address indexed user, uint256 reward);
-  event TokenMultipliedPriceUpdated(uint256 newPrice);
   event PrincipalWithdrawn(address indexed user, uint256 totalAmount);
 
   event FundraisingStarted();
+  event FundraisingLocked();
+  event FundraisingStopped();
+  event FundraisingFailed();
   event OperatingStarted();
-  event PoolClosed();
-  event PoolLocked();
-  event PoolFundraisingStopped();
-  event PoolOperatingStopped();
-  event PoolFailed();
+  event OperatingClosed();
+  event OperatingStopped();
+
+  event AdminChanged(address indexed previousAdmin, address indexed newAdmin);
 
   /**
    * @dev 스테이킹풀 생성자
-   * @param _admin 풀의 관리자 주소
+   * @param _admin Pool 의 관리자 주소
    */
   constructor(address _admin) {
     admin = _admin;
@@ -142,7 +144,7 @@ contract StakingPool {
   }
 
   //////////////////////////////////
-  /// Pool 관련 설정 함수들 by Admin ///
+  /// Pool 운영 관련 함수들 by Admin ///
   //////////////////////////////////
 
   /**
@@ -152,11 +154,14 @@ contract StakingPool {
   function changeAdmin(address newAdmin) public onlyAdmin {
     require(newAdmin != address(0), "New admin address cannot be zero");
 
+    address previousAdmin = admin;
     admin = newAdmin;
+
+    emit AdminChanged(previousAdmin, newAdmin);
   }
 
   /**
-   * @notice 스테이킹된 토큰을 관리자 권한으로 전송
+   * @notice 스테이킹풀이 보유한 토큰을 관리자 권한으로 전송
    * @param _recipient 받는 주소
    * @param _amount 전송할 토큰의 양
    */
@@ -182,7 +187,7 @@ contract StakingPool {
 
   /**
    * @notice Pool 이름 설정
-   * @param _name 풀 이름
+   * @param _name Pool 이름
    */
   function setPoolName(string memory _name) public onlyAdmin {
     require(state == State.Waiting, "Pool is not in Waiting state");
@@ -192,7 +197,7 @@ contract StakingPool {
 
   /**
    * @notice Pool 설명 설정
-   * @param _description 풀 설명
+   * @param _description Pool 설명
    */
   function setPoolDescription(string memory _description) public onlyAdmin {
     require(state == State.Waiting, "Pool is not in Waiting state");
@@ -211,15 +216,15 @@ contract StakingPool {
   }
 
   /**
-   * @notice 연 이자율 설정
-   * @param _interestRate 연 이자율
+   * @notice 연이율 설정
+   * @param _interestMultipliedRate 연이율, ex) 0.5% 경우, 실제값은 0.5 x RATE_MULTIPLIER
    */
   function setAnnualInterestRateMultiplier(
-    uint256 _interestRate
+    uint256 _interestMultipliedRate
   ) public onlyAdmin {
     require(state == State.Waiting, "Pool is not in Waiting state");
 
-    details.annualInterestMultipliedRate = _interestRate;
+    details.annualInterestMultipliedRate = _interestMultipliedRate;
   }
 
   /**
@@ -254,16 +259,20 @@ contract StakingPool {
 
   /**
    * @notice 실시간 Token 가격을 외부에서 주기적으로 업데이트 한다.
-   * @param _price 새로운 Token 가격
+   * @param _multipliedPrice 새로운 Token 가격
+   * ex) $1 인 경우, 실제값은 1 x PRICE_MULTIPLIER
    */
-  function updateTokenMultipliedPrice(uint256 _price) external onlyAdmin {
-    currentTokenMultipliedPrice = _price;
-    emit TokenMultipliedPriceUpdated(_price);
+  function updateTokenMultipliedPrice(
+    uint256 _multipliedPrice
+  ) external onlyAdmin {
+    currentTokenMultipliedPrice = _multipliedPrice;
+    emit TokenMultipliedPriceUpdated(_multipliedPrice);
   }
 
   /**
    * @notice 보상 스케줄을 추가한다.
    * @param _tokenMultipliedPriceAtPayout 보상 시 적용될 토큰 가격
+   * ex) $1 인 경우, 실제값은 1 x PRICE_MULTIPLIER
    * @param _start 보상 시작 시점(Unix time)
    * @param _end 보상 종료 시점(Unix time)
    */
@@ -301,11 +310,50 @@ contract StakingPool {
   function startFundraising() public onlyAdmin {
     require(
       state == State.Waiting,
-      "Pool must be in Waiting state to start fundraising"
+      "Pool must be in Waiting state to be Fundraising"
     );
 
     state = State.Fundraising;
     emit FundraisingStarted();
+  }
+
+  /**
+   * @notice 모금 잠김
+   */
+  function lockFundraising() public onlyAdmin {
+    require(
+      state == State.Fundraising,
+      "Pool must be in Fundraising state to be FundraisingLocked"
+    );
+
+    state = State.FundraisingLocked;
+    emit FundraisingLocked();
+  }
+
+  /**
+   * @notice 모금 중지
+   */
+  function stopFundraising() public onlyAdmin {
+    require(
+      state == State.Fundraising,
+      "Pool must be in Fundraising state to be FundraisingStopped"
+    );
+
+    state = State.FundraisingStopped;
+    emit FundraisingStopped();
+  }
+
+  /**
+   * @notice 모금 실패
+   */
+  function failFundraising() public onlyAdmin {
+    require(
+      state == State.Fundraising,
+      "Pool must be in Fundraising state to be FundraisingFailed"
+    );
+
+    state = State.FundraisingFailed;
+    emit FundraisingFailed();
   }
 
   /**
@@ -314,7 +362,7 @@ contract StakingPool {
   function startOperating() public onlyAdmin {
     require(
       state == State.Fundraising || state == State.FundraisingLocked,
-      "Pool must be in Fundraising or FundraisingLocked state to start operating"
+      "Pool must be in Fundraising or FundraisingLocked state to be Operating"
     );
 
     state = State.Operating;
@@ -322,68 +370,29 @@ contract StakingPool {
   }
 
   /**
-   * @notice Pool 종료
+   * @notice 운영 종료
    */
-  function closePool() public onlyAdmin {
+  function closeOperating() public onlyAdmin {
     require(
       state == State.Operating,
-      "Pool must be in Operating state to be closed"
+      "Pool must be in Operating state to be OperatingClosed"
     );
 
     state = State.OperatingClosed;
-    emit PoolClosed();
-  }
-
-  /**
-   * @notice 잠김
-   */
-  function lockPool() public onlyAdmin {
-    require(
-      state == State.Fundraising,
-      "Pool must be in Fundraising state to be locked"
-    );
-
-    state = State.FundraisingLocked;
-    emit PoolLocked();
-  }
-
-  /**
-   * @notice 모금 중지
-   */
-  function stopPoolFundraising() public onlyAdmin {
-    require(
-      state == State.Fundraising,
-      "Pool must be in Fundraising or Operating state to be FundraisingStopped"
-    );
-
-    state = State.FundraisingStopped;
-    emit PoolFundraisingStopped();
+    emit OperatingClosed();
   }
 
   /**
    * @notice 운영 중지
    */
-  function stopPoolOperating() public onlyAdmin {
+  function stopOperating() public onlyAdmin {
     require(
       state == State.Operating,
-      "Pool must be in Fundraising or Operating state to be OperatingStopped"
+      "Pool must be in Operating state to be OperatingStopped"
     );
 
     state = State.OperatingStopped;
-    emit PoolOperatingStopped();
-  }
-
-  /**
-   * @notice 실패
-   */
-  function failPool() public onlyAdmin {
-    require(
-      state == State.Fundraising,
-      "Pool must be in Fundraising state to be marked as failed"
-    );
-
-    state = State.FundraisingFailed;
-    emit PoolFailed();
+    emit OperatingStopped();
   }
 
   ////////////////
@@ -391,8 +400,9 @@ contract StakingPool {
   ////////////////
 
   /**
-   * @notice 스테이킹
-   * @param _amount 스테이킹 금액
+   * @notice 스테이킹 (모금/운영 인 경우)
+   * 사전에 user 가 _amount 만큼의 approve 를 해당 Pool 에 해야한다.
+   * @param _amount 스테이킹 수량
    */
   function stakeToken(uint256 _amount) external {
     require(
@@ -401,12 +411,12 @@ contract StakingPool {
     );
 
     /// 최소 스테이킹 금액 이상인지 확인
-    uint256 minStakeAmountInTokens = (details.minStakePrice *
+    uint256 minStakeAmount = (details.minStakePrice *
       tokenDecimals *
       PRICE_MULTIPLIER) / currentTokenMultipliedPrice;
 
     require(
-      _amount >= minStakeAmountInTokens,
+      _amount >= minStakeAmount,
       "Amount is less than the minimum stakeToken amount"
     );
 
@@ -427,15 +437,10 @@ contract StakingPool {
       details.maxFundraisingPrice * PRICE_MULTIPLIER
     ) {
       state = State.FundraisingLocked;
-      emit PoolLocked();
+      emit FundraisingLocked();
     }
-    totalFundraisingMultipliedPrice = newTotalFundraisingMultipliedPrice;
 
-    IERC20(details.stakingToken).transferFrom(
-      msg.sender,
-      address(this),
-      _amount
-    );
+    totalFundraisingMultipliedPrice = newTotalFundraisingMultipliedPrice;
 
     uint256 dailyInterestMultipliedPrice = ((_amount *
       currentTokenMultipliedPrice) * details.annualInterestMultipliedRate) /
@@ -454,11 +459,17 @@ contract StakingPool {
       })
     );
 
+    IERC20(details.stakingToken).transferFrom(
+      msg.sender,
+      address(this),
+      _amount
+    );
+
     emit Staked(msg.sender, _amount);
   }
 
   /**
-   * @notice 언스테이킹
+   * @notice 언스테이킹 (모금 인 경우)
    * @param _stakeIndex 스테이킹 인덱스
    * @param _amount 언스테이킹 할 금액
    */
@@ -489,17 +500,17 @@ contract StakingPool {
       record.dailyInterestMultipliedPrice = dailyInterestMultipliedPrice;
     }
 
-    IERC20(details.stakingToken).transfer(msg.sender, _amount);
-
     totalFundraisingMultipliedPrice -=
       (_amount * record.tokenMultipliedPrice) /
       tokenDecimals;
+
+    IERC20(details.stakingToken).transfer(msg.sender, _amount);
 
     emit Unstaked(msg.sender, _amount);
   }
 
   /**
-   * @notice staking 별 보상 요청 (운영/운영종료/운영중지 인 경우)
+   * @notice 특정 staking 의 보상 요청 (운영/운영종료/운영중지 인 경우)
    * @param _stakeIndex 스테이킹 인덱스
    */
   function claimReward(uint256 _stakeIndex) public {
@@ -515,7 +526,7 @@ contract StakingPool {
       "Invalid stakeToken index"
     );
 
-    (uint256 reward, uint256 nextIndex) = calculatePendingReward(
+    (uint256 reward, uint256 nextIndex) = calculatePendingRewardForStake(
       msg.sender,
       _stakeIndex
     );
@@ -528,6 +539,24 @@ contract StakingPool {
     IERC20(details.stakingToken).transfer(msg.sender, reward);
 
     emit RewardClaimed(msg.sender, reward);
+  }
+
+  /**
+   * @notice 사용자의 전체 보상 요청
+   */
+  function claimAllReward() public {
+    require(
+      state == State.Operating ||
+        state == State.OperatingClosed ||
+        state == State.OperatingStopped,
+      "Invalid state for claiming all reward"
+    );
+
+    StakeRecord[] storage records = userStakes[msg.sender];
+
+    for (uint256 i = 0; i < records.length; i++) {
+      claimReward(i);
+    }
   }
 
   /**
@@ -547,13 +576,14 @@ contract StakingPool {
 
     /// 모든 보상이 청구되었는지 확인
     for (uint256 i = 0; i < records.length; i++) {
-      (uint256 reward, ) = calculatePendingReward(msg.sender, i);
+      (uint256 reward, ) = calculatePendingRewardForStake(msg.sender, i);
       require(
         reward == 0,
         "Please claim all reward before withdrawing principal"
       );
     }
 
+    // 모든 원금 계산
     for (uint256 i = 0; i < records.length; i++) {
       uint256 amount = (records[i].amountStaked *
         records[i].tokenMultipliedPrice) / currentTokenMultipliedPrice;
@@ -567,39 +597,29 @@ contract StakingPool {
     emit PrincipalWithdrawn(msg.sender, totalAmount);
   }
 
-  /**
-   * @notice 사용자의 전체 보상 요청
-   */
-  function claimAllReward() public {
-    require(state == State.Operating, "Invalid state for requesting reward");
-
-    /// 보상 요청 로직
-    StakeRecord[] storage records = userStakes[msg.sender];
-
-    for (uint256 i = 0; i < records.length; i++) {
-      claimReward(i);
-    }
-  }
-
   ////////////////
   /// 사용자 조회 ///
   ////////////////
 
+  /**
+   * @notice Pool 의 세부사항을 조회하는 함수
+   * @return Pool 의 세부사항을 담은 Details 구조체
+   */
   function getPoolDetails() external view returns (Details memory) {
     return details;
   }
 
   /**
-   * @notice 보상을 확인
+   * @notice 특정 스테이킹에 대해 받을 보상을 조회
    * @param _user 사용자 주소
    * @param _stakeIndex 스테이킹 인덱스
-   * @return 받을 보상 금액과 다음 인덱스
+   * @return 받을 보상 금액과 다음번 계산될 보상 스케줄 인덱스
    */
-  function calculatePendingReward(
+  function calculatePendingRewardForStake(
     address _user,
     uint256 _stakeIndex
   ) public view returns (uint256, uint256) {
-    require(_stakeIndex < userStakes[_user].length, "Invalid stakeToken index");
+    require(_stakeIndex < userStakes[_user].length, "Invalid stake index");
 
     StakeRecord storage userStake = userStakes[_user][_stakeIndex];
     uint256 reward = 0;
@@ -612,59 +632,46 @@ contract StakingPool {
     ) {
       RewardSchedule memory schedule = rewardSchedules[i];
 
-      /// 현재 시간이 보상 종료 시간을 넘지 않았으면 보상 계산에서 제외
+      // 현재 시간이 보상 종료 시간을 넘지 않았으면 보상 계산에서 제외
       if (block.timestamp < schedule.end) {
         break;
       }
 
-      /// 보상 계산을 위한 시작 시점: 스테이킹 시점과 스케줄의 시작 시점 중 더 늦은 시점
-      uint256 effectivestart = userStake.stakeTime > schedule.start
+      // 보상 계산을 위한 시작 시점: 스테이킹 시점과 스케줄의 시작 시점 중 더 늦은 시점
+      uint256 effectiveStart = userStake.stakeTime > schedule.start
         ? userStake.stakeTime
         : schedule.start;
 
-      // 보상 계산을 위한 종료 시점: 현재 시간과 스케줄의 종료 시점 중 더 이른 시점
-      uint256 effectiveend = block.timestamp < schedule.end
-        ? block.timestamp
-        : schedule.end;
+      // 스케줄의 시작 시점이 스케줄의 종료 시점보다 이전인 경우에만 보상을 계산
+      uint256 stakingDays = (schedule.end - effectiveStart) / 1 days;
 
-      /// 스테이킹 시점이 스케줄의 종료 시점보다 이전이고, 현재 시간이 스케줄의 시작 시점보다 이후인 경우에만 보상을 계산합니다.
-      if (
-        userStake.stakeTime < schedule.end && block.timestamp > schedule.start
-      ) {
-        if (effectivestart < effectiveend) {
-          uint256 stakingDays = (effectiveend - effectivestart) / 1 days;
+      reward +=
+        (userStake.dailyInterestMultipliedPrice * stakingDays * tokenDecimals) /
+        schedule.tokenMultipliedPriceAtPayout;
 
-          reward += ((userStake.dailyInterestMultipliedPrice *
-            stakingDays *
-            tokenDecimals) / schedule.tokenMultipliedPriceAtPayout);
-        }
-      }
-
-      /// 현재 시간이 보상 종료 시간을 넘었을때 다음 보상 스케줄로 넘어간다.
-      if (block.timestamp >= schedule.end) {
-        nextIndex += 1;
-      }
+      // 현재 시간이 보상 종료 시간을 넘었을 때 다음 보상 스케줄로 넘어갑니다.
+      nextIndex += 1;
     }
 
     return (reward, nextIndex);
   }
 
   /**
-   * @notice 사용자의 전체 받을 보상 조회
-   * @param _staker 사용자 주소
+   * @notice 전체 스테이킹에 대해 받을 보상을 조회
+   * @param _user 사용자 주소
    * @return 사용자가 받을 전체 보상 금액
    */
-  function calculateAllPendingReward(
-    address _staker
+  function calculatePendingRewardForAllStakes(
+    address _user
   ) public view returns (uint256) {
     require(state == State.Operating, "Invalid state for viewing reward");
 
     // 보상 조회 로직
     uint256 totalReward = 0;
-    StakeRecord[] storage records = userStakes[_staker];
+    StakeRecord[] storage records = userStakes[_user];
 
     for (uint256 i = 0; i < records.length; i++) {
-      (uint256 reward, ) = calculatePendingReward(_staker, i);
+      (uint256 reward, ) = calculatePendingRewardForStake(_user, i);
       totalReward += reward;
     }
 
@@ -673,17 +680,17 @@ contract StakingPool {
 
   /**
    * @notice 사용자의 전체 받은 보상 조회
-   * @param _staker 사용자 주소
+   * @param _user 사용자 주소
    * @return 사용자가 받은 전체 보상 금액
    */
-  function calculateAllClaimedReward(
-    address _staker
+  function calculateClaimedRewardForAllStakes(
+    address _user
   ) public view returns (uint256) {
     require(state == State.Operating, "Invalid state for viewing reward");
 
     /// 누적 보상 조회 로직
     uint256 totalReward = 0;
-    StakeRecord[] storage records = userStakes[_staker];
+    StakeRecord[] storage records = userStakes[_user];
 
     for (uint256 i = 0; i < records.length; i++) {
       totalReward += records[i].claimedReward;
@@ -693,11 +700,41 @@ contract StakingPool {
   }
 
   /**
+   * @notice 특정 사용자의 전체 스테이킹 수량을 조회하는 함수
+   * @param user 사용자의 주소
+   * @return 특정 사용자가 스테이킹한 전체 수량
+   */
+  function getTotalStakedAmount(address user) external view returns (uint256) {
+    uint256 totalStaked = 0;
+
+    for (uint256 i = 0; i < userStakes[user].length; i++) {
+      totalStaked += userStakes[user][i].amountStaked;
+    }
+
+    return totalStaked;
+  }
+
+  /**
    * @notice 사용자의 스테이킹 개수를 얻어온다.
    * @param _user 사용자 주소
    * @return 사용자의 스테이킹 개수
    */
-  function getUserStakeCount(address _user) external view returns (uint256) {
+  function getStakeCount(address _user) external view returns (uint256) {
     return userStakes[_user].length;
+  }
+
+  /**
+   * @notice 사용자의 특정 스테이킹 정보를 조회하는 함수
+   * @param _user 사용자 주소
+   * @param _stakeIndex 스테이킹 인덱스
+   * @return 스테이킹 정보를 담은 StakeRecord 구조체
+   */
+  function getStake(
+    address _user,
+    uint256 _stakeIndex
+  ) external view returns (StakeRecord memory) {
+    require(_stakeIndex < userStakes[_user].length, "Invalid stake index");
+
+    return userStakes[_user][_stakeIndex];
   }
 }

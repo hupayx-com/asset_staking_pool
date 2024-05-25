@@ -93,7 +93,7 @@ describe("WithdrawPrincipal (원금은 회수 시점 토큰 가격에 비례)", 
       .connect(staker_1)
       .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER));
 
-    await stakingPool.connect(owner).stopPoolFundraising();
+    await stakingPool.connect(owner).stopFundraising();
     await stakingPool.connect(owner).updateTokenMultipliedPrice(100000);
 
     await stakingPool.connect(staker_1).withdrawAllPrincipal();
@@ -125,7 +125,7 @@ describe("WithdrawPrincipal (원금은 회수 시점 토큰 가격에 비례)", 
       .connect(staker_1)
       .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER));
 
-    await stakingPool.connect(owner).failPool();
+    await stakingPool.connect(owner).failFundraising();
 
     await stakingPool.connect(owner).updateTokenMultipliedPrice(500000);
     await stakingPool.connect(staker_1).withdrawAllPrincipal();
@@ -174,7 +174,7 @@ describe("WithdrawPrincipal (원금은 회수 시점 토큰 가격에 비례)", 
     await ethers.provider.send("evm_mine");
 
     // Pool 상태 '운영 중지'로 변경
-    await stakingPool.connect(owner).stopPoolOperating();
+    await stakingPool.connect(owner).stopOperating();
 
     // 보상이 남아 있는 상태에서 원금 인출 시도
     await expect(
@@ -235,7 +235,7 @@ describe("WithdrawPrincipal (원금은 회수 시점 토큰 가격에 비례)", 
     await ethers.provider.send("evm_mine");
 
     // Pool 상태 '운영 종료'로 변경
-    await stakingPool.connect(owner).closePool();
+    await stakingPool.connect(owner).closeOperating();
 
     // 보상이 남아 있는 상태에서 원금 인출 시도
     await expect(
@@ -296,7 +296,7 @@ describe("WithdrawPrincipal (원금은 회수 시점 토큰 가격에 비례)", 
     await ethers.provider.send("evm_mine");
 
     // Pool 상태 '운영 중지'로 변경
-    await stakingPool.connect(owner).stopPoolOperating();
+    await stakingPool.connect(owner).stopOperating();
 
     // 보상이 남아 있는 상태에서 원금 인출 시도
     await expect(

@@ -12,7 +12,9 @@
 
 - **설명:** 팩토리 계약의 관리자 주소를 업데이트합니다. 오직 현 관리자만 호출할 수 있습니다.
 - **매개변수:**
-- `newAdmin (address)`: 새로운 관리자 주소.
+  - `newAdmin (address)`: 새로운 관리자 주소.
+- **이벤트 트리거:**
+  - `AdminChanged(address indexed previousAdmin, address indexed newAdmin)`
 
 ### 생성 함수
 
@@ -21,7 +23,7 @@
 - **설명:** 새로운 스테이킹풀을 생성합니다. 오직 관리자만 호출할 수 있습니다.
 - **매개변수:** 없음.
 - **이벤트 트리거:**
-- `PoolCreated(address indexed poolAddress, address indexed creator)`: 새로운 풀이 생성되었을 때 발생합니다.
+  - `PoolCreated(address indexed poolAddress, address indexed creator)`
 
 ### 조회 함수
 
@@ -30,27 +32,34 @@
 - **설명:** 생성된 모든 풀의 주소를 반환합니다.
 - **매개변수:** 없음.
 - **리턴값:**
-- `StakingPool[] memory`: 생성된 모든 풀의 주소가 포함된 배열.
+  - `StakingPool[] memory`: 생성된 모든 풀의 주소가 포함된 배열.
 
 #### getPoolDetails(uint256 \_index)
 
 - **설명:** 특정 인덱스의 풀 정보를 반환합니다.
 - **매개변수:**
-- `_index (uint256)`: 풀의 인덱스.
+  - `_index (uint256)`: 풀의 인덱스.
 - **리턴값:**
-- `StakingPool.Details memory`: 특정 인덱스의 풀 정보.
+  - `StakingPool.Details memory`: 특정 인덱스의 풀 정보.
 
 #### getPoolsLength()
 
 - **설명:** 생성된 풀의 개수를 반환합니다.
 - **매개변수:** 없음.
 - **리턴값:**
-- `uint256`: 생성된 풀의 개수.
+  - `uint256`: 생성된 풀의 개수.
 
 ### 이벤트
 
 - **PoolCreated**
-- **설명:** 새로운 스테이킹풀이 생성될 때 발생합니다.
+- **설명:** 새로운 스테이킹풀이 생성되었을 때 발생합니다.
 - **매개변수:**
-- `poolAddress (address)`: 생성된 풀의 주소.
-- `creator (address)`: 풀을 생성한 관리자 주소.
+
+  - `poolAddress (address)`: 생성된 풀의 주소.
+  - `creator (address)`: 풀을 생성한 관리자 주소.
+
+- **AdminChanged**
+- **설명:** 관리자 주소가 변경되었을 때 발생합니다.
+- **매개변수:**
+  - `previousAdmin (address)`: 이전 관리자 주소.
+  - `newAdmin (address)`: 새로운 관리자 주소.

@@ -114,7 +114,7 @@ describe("UnStaking", function () {
       .connect(staker_1)
       .unStakeToken(0, ethers.parseEther(STAKING_AMOUNT_ETHER_730));
 
-    const stakeLength = await stakingPool.getUserStakeCount(
+    const stakeLength = await stakingPool.getStakeCount(
       await staker_1.getAddress()
     );
     expect(stakeLength).to.equal(1);
@@ -167,7 +167,7 @@ describe("UnStaking", function () {
       .connect(staker_1)
       .unStakeToken(0, ethers.parseEther(STAKING_AMOUNT_ETHER_365));
 
-    const stakeLength = await stakingPool.getUserStakeCount(
+    const stakeLength = await stakingPool.getStakeCount(
       await staker_1.getAddress()
     );
     expect(stakeLength).to.equal(1);
@@ -229,7 +229,7 @@ describe("UnStaking", function () {
       .connect(staker_1)
       .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER_730));
 
-    await stakingPool.connect(owner).stopPoolFundraising();
+    await stakingPool.connect(owner).stopFundraising();
 
     await expect(
       stakingPool
@@ -258,7 +258,7 @@ describe("UnStaking", function () {
       .connect(staker_1)
       .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER_730));
 
-    await stakingPool.connect(owner).closePool();
+    await stakingPool.connect(owner).closeOperating();
 
     await expect(
       stakingPool

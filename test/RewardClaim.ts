@@ -528,9 +528,10 @@ describe("RewardClaim (한 명의 사용자)", function () {
     await stakingPool.connect(staker_1).claimReward(0);
     await stakingPool.connect(staker_1).claimReward(1);
 
-    const totalReceivedRewards = await stakingPool.calculateAllClaimedReward(
-      await staker_1.getAddress()
-    );
+    const totalReceivedRewards =
+      await stakingPool.calculateClaimedRewardForAllStakes(
+        await staker_1.getAddress()
+      );
 
     // 사용자가 받은 보상
     // 첫 번째 스테이킹(365): 20

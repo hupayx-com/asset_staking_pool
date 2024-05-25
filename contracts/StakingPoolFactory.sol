@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.24;
 
-import "./StakingPool.sol"; // StakingPool 컨트랙트를 가져옵니다.
+import "./StakingPool.sol";
 
 /**
  * @title StakingPoolFactory
@@ -19,6 +19,7 @@ contract StakingPoolFactory {
    * @dev 이벤트 정의
    */
   event PoolCreated(address indexed poolAddress, address indexed creator);
+  event AdminChanged(address indexed previousAdmin, address indexed newAdmin);
 
   /**
    * @dev StakingPool 팩토리 생성자
@@ -42,7 +43,10 @@ contract StakingPoolFactory {
   function changeAdmin(address newAdmin) public onlyAdmin {
     require(newAdmin != address(0), "New admin address cannot be zero");
 
+    address previousAdmin = admin;
     admin = newAdmin;
+
+    emit AdminChanged(previousAdmin, newAdmin);
   }
 
   /**

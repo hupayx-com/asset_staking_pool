@@ -101,10 +101,11 @@ describe("RewardCheck", function () {
     await ethers.provider.send("evm_increaseTime", [SECONDS_IN_A_DAY * 1]);
     await ethers.provider.send("evm_mine");
 
-    const [rewards, nextIndex] = await stakingPool.calculatePendingReward(
-      await staker_1.getAddress(),
-      0
-    );
+    const [rewards, nextIndex] =
+      await stakingPool.calculatePendingRewardForStake(
+        await staker_1.getAddress(),
+        0
+      );
     expect(rewards).to.be.equal(ethers.parseEther("0"));
 
     const stakeRecord = await stakingPool.userStakes(
@@ -149,10 +150,11 @@ describe("RewardCheck", function () {
     await ethers.provider.send("evm_increaseTime", [SECONDS_IN_A_DAY * 15]);
     await ethers.provider.send("evm_mine");
 
-    const [rewards, nextIndex] = await stakingPool.calculatePendingReward(
-      await staker_1.getAddress(),
-      0
-    );
+    const [rewards, nextIndex] =
+      await stakingPool.calculatePendingRewardForStake(
+        await staker_1.getAddress(),
+        0
+      );
     expect(rewards).to.be.equal(ethers.parseEther("5"));
 
     const stakeRecord = await stakingPool.userStakes(
@@ -202,10 +204,11 @@ describe("RewardCheck", function () {
     await ethers.provider.send("evm_increaseTime", [SECONDS_IN_A_DAY * 25]);
     await ethers.provider.send("evm_mine");
 
-    const [rewards, nextIndex] = await stakingPool.calculatePendingReward(
-      await staker_1.getAddress(),
-      0
-    );
+    const [rewards, nextIndex] =
+      await stakingPool.calculatePendingRewardForStake(
+        await staker_1.getAddress(),
+        0
+      );
     // 7 = 5 + 2
     expect(rewards).to.be.equal(ethers.parseEther("7"));
 
@@ -257,10 +260,11 @@ describe("RewardCheck", function () {
     await ethers.provider.send("evm_increaseTime", [SECONDS_IN_A_DAY * 5 - 2]);
     await ethers.provider.send("evm_mine");
 
-    const [rewards, nextIndex] = await stakingPool.calculatePendingReward(
-      await staker_1.getAddress(),
-      0
-    );
+    const [rewards, nextIndex] =
+      await stakingPool.calculatePendingRewardForStake(
+        await staker_1.getAddress(),
+        0
+      );
     expect(rewards).to.be.equal(ethers.parseEther("0"));
 
     const stakeRecord = await stakingPool.userStakes(
@@ -311,10 +315,11 @@ describe("RewardCheck", function () {
     await ethers.provider.send("evm_increaseTime", [SECONDS_IN_A_DAY * 16 - 2]);
     await ethers.provider.send("evm_mine");
 
-    const [rewards, nextIndex] = await stakingPool.calculatePendingReward(
-      await staker_1.getAddress(),
-      0
-    );
+    const [rewards, nextIndex] =
+      await stakingPool.calculatePendingRewardForStake(
+        await staker_1.getAddress(),
+        0
+      );
     expect(rewards).to.be.equal(ethers.parseEther("5"));
 
     const stakeRecord = await stakingPool.userStakes(
@@ -375,9 +380,10 @@ describe("RewardCheck", function () {
     await ethers.provider.send("evm_increaseTime", [SECONDS_IN_A_DAY * 25]);
     await ethers.provider.send("evm_mine");
 
-    const totalPendingRewards = await stakingPool.calculateAllPendingReward(
-      await staker_1.getAddress()
-    );
+    const totalPendingRewards =
+      await stakingPool.calculatePendingRewardForAllStakes(
+        await staker_1.getAddress()
+      );
 
     // 7 + 14
     expect(totalPendingRewards).to.be.equal(ethers.parseEther("21"));

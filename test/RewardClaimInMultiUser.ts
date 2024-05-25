@@ -120,9 +120,13 @@ describe("RewardClaim (다수의 사용자)", function () {
     await stakingPool.connect(staker_2).claimReward(0);
 
     const totalReceivedRewardsStaker1 =
-      await stakingPool.calculateAllClaimedReward(await staker_1.getAddress());
+      await stakingPool.calculateClaimedRewardForAllStakes(
+        await staker_1.getAddress()
+      );
     const totalReceivedRewardsStaker2 =
-      await stakingPool.calculateAllClaimedReward(await staker_2.getAddress());
+      await stakingPool.calculateClaimedRewardForAllStakes(
+        await staker_2.getAddress()
+      );
 
     expect(totalReceivedRewardsStaker1).to.be.equal(ethers.parseEther("20"));
     expect(totalReceivedRewardsStaker2).to.be.equal(ethers.parseEther("40"));
@@ -177,9 +181,13 @@ describe("RewardClaim (다수의 사용자)", function () {
     await stakingPool.connect(staker_2).claimReward(0);
 
     const totalReceivedRewardsStaker1 =
-      await stakingPool.calculateAllClaimedReward(await staker_1.getAddress());
+      await stakingPool.calculateClaimedRewardForAllStakes(
+        await staker_1.getAddress()
+      );
     const totalReceivedRewardsStaker2 =
-      await stakingPool.calculateAllClaimedReward(await staker_2.getAddress());
+      await stakingPool.calculateClaimedRewardForAllStakes(
+        await staker_2.getAddress()
+      );
 
     expect(totalReceivedRewardsStaker1).to.be.equal(ethers.parseEther("10"));
     expect(totalReceivedRewardsStaker2).to.be.equal(ethers.parseEther("20"));
@@ -232,9 +240,13 @@ describe("RewardClaim (다수의 사용자)", function () {
     await stakingPool.connect(staker_1).claimReward(0);
 
     const totalReceivedRewardsStaker1 =
-      await stakingPool.calculateAllClaimedReward(await staker_1.getAddress());
+      await stakingPool.calculateClaimedRewardForAllStakes(
+        await staker_1.getAddress()
+      );
     const totalReceivedRewardsStaker2 =
-      await stakingPool.calculateAllClaimedReward(await staker_2.getAddress());
+      await stakingPool.calculateClaimedRewardForAllStakes(
+        await staker_2.getAddress()
+      );
 
     // 사용자가 받은 보상
     expect(totalReceivedRewardsStaker1).to.be.equal(ethers.parseEther("7"));
