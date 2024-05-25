@@ -206,7 +206,7 @@ describe("Staking", function () {
       .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER_364));
 
     const poolStatus = await stakingPool.state();
-    expect(poolStatus).to.equal(PoolState.Locked);
+    expect(poolStatus).to.equal(PoolState.FundraisingLocked);
   });
 
   it("2 명의 사용자가 각각 토큰을 스테이킹 한다.", async function () {

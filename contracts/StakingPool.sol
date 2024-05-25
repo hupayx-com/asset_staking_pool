@@ -38,30 +38,29 @@ contract StakingPool {
   /// 소수점 계산을 위해 이자율 x100 (ex. 이자율: 0.05 %)
   uint256 public constant RATE_MULTIPLIER = 100;
 
-  /// default: wei
   /// staking token 의 소수점 자리수에 따라 변경 가능
-  uint256 public tokenDecimals = 1e18;
+  uint256 public tokenDecimals = 1e18; /// default: wei
 
-  /// 토큰 당 달러 가격 (ex. 토근 가격이 1 달러 인 경우 실제 값은 1 x PRICE_MULTIPLIER)
+  /// 토큰 당 달러 가격 (ex. 토근 가격이 $1 인 경우 실제 값은 1 x PRICE_MULTIPLIER)
   /// 실시간 Token 가격 반영을 위해 외부에서 주기적으로 업데이트 필요
-  /// staking 시 해당 값을 적용하여 연 이자율 계산
+  /// staking 시 해당 값을 적용하여 일(day) 이자율 계산
   uint256 public currentTokenMultipliedPrice = 0;
 
-  /// 총 모금 금액 (ex. 총 모금액이 100 달러 인 경우 실제 값은 100 x PRICE_MULTIPLIER)
+  /// 총 모금 금액 (ex. 총 모금액이 $100 인 경우 실제 값은 100 x PRICE_MULTIPLIER)
   uint256 public totalFundraisingMultipliedPrice = 0;
 
   /**
-   * @dev 풀의 상태를 나타내는 열거형
+   * @dev Pool 의 상태를 나타내는 열거형
    */
   enum State {
     Waiting, /// 대기 (next status: 모금)
     Fundraising, /// 모금 (next status: 운영 or 모금 잠김 or 모금 중지 or 모금 실패)
-    Operating, /// 운영 (next status: 운영 종료 or 운영 중지)
-    Closed, /// 운영 종료
-    Locked, /// 모금 잠김 (next status: 운영)
+    FundraisingLocked, /// 모금 잠김 (next status: 운영)
     FundraisingStopped, /// 모금 중지
-    OperatingStopped, /// 운영 중지
-    Failed /// 모금 실패
+    FundraisingFailed, /// 모금 실패
+    Operating, /// 운영 (next status: 운영 종료 or 운영 중지)
+    OperatingClosed, /// 운영 종료
+    OperatingStopped /// 운영 중지
   }
   State public state;
 
@@ -172,6 +171,16 @@ contract StakingPool {
   }
 
   /**
+   * @notice 토큰 소수점 자릿수 설정
+   * @param _decimals 소수점 자릿수
+   */
+  function setTokenDecimals(uint256 _decimals) public onlyAdmin {
+    require(state == State.Waiting, "Pool is not in Waiting state");
+
+    tokenDecimals = _decimals;
+  }
+
+  /**
    * @notice Pool 이름 설정
    * @param _name 풀 이름
    */
@@ -266,9 +275,9 @@ contract StakingPool {
     require(_start < _end, "Start date must be before end date");
     require(
       state == State.Operating ||
-        state == State.Closed ||
+        state == State.OperatingClosed ||
         state == State.OperatingStopped,
-      "Pool is not in Operating, Closed, or OperatingStopped state"
+      "Pool is not in Operating, OperatingClosed, or OperatingStopped state"
     );
 
     rewardSchedules.push(
@@ -304,8 +313,8 @@ contract StakingPool {
    */
   function startOperating() public onlyAdmin {
     require(
-      state == State.Fundraising || state == State.Locked,
-      "Pool must be in Fundraising or Locked state to start operating"
+      state == State.Fundraising || state == State.FundraisingLocked,
+      "Pool must be in Fundraising or FundraisingLocked state to start operating"
     );
 
     state = State.Operating;
@@ -321,7 +330,7 @@ contract StakingPool {
       "Pool must be in Operating state to be closed"
     );
 
-    state = State.Closed;
+    state = State.OperatingClosed;
     emit PoolClosed();
   }
 
@@ -334,7 +343,7 @@ contract StakingPool {
       "Pool must be in Fundraising state to be locked"
     );
 
-    state = State.Locked;
+    state = State.FundraisingLocked;
     emit PoolLocked();
   }
 
@@ -373,7 +382,7 @@ contract StakingPool {
       "Pool must be in Fundraising state to be marked as failed"
     );
 
-    state = State.Failed;
+    state = State.FundraisingFailed;
     emit PoolFailed();
   }
 
@@ -412,12 +421,12 @@ contract StakingPool {
       "Amount exceeds the maximum fundraising amount"
     );
 
-    /// 최대 모금액에 도달한 경우 풀 상태를 "Locked"으로 변경
+    /// 최대 모금액에 도달한 경우 풀 상태를 "FundraisingLocked"으로 변경
     if (
       newTotalFundraisingMultipliedPrice ==
       details.maxFundraisingPrice * PRICE_MULTIPLIER
     ) {
-      state = State.Locked;
+      state = State.FundraisingLocked;
       emit PoolLocked();
     }
     totalFundraisingMultipliedPrice = newTotalFundraisingMultipliedPrice;
@@ -496,7 +505,7 @@ contract StakingPool {
   function claimReward(uint256 _stakeIndex) public {
     require(
       state == State.Operating ||
-        state == State.Closed ||
+        state == State.OperatingClosed ||
         state == State.OperatingStopped,
       "Invalid state for claiming reward"
     );
@@ -527,9 +536,9 @@ contract StakingPool {
   function withdrawAllPrincipal() public {
     require(
       state == State.FundraisingStopped ||
-        state == State.Failed ||
+        state == State.FundraisingFailed ||
         state == State.OperatingStopped ||
-        state == State.Closed,
+        state == State.OperatingClosed,
       "Invalid state for withdrawing principal"
     );
 

@@ -91,7 +91,7 @@
 
 #### addRewardSchedule(uint256 \_tokenMultipliedPriceAtPayout, uint256 \_start, uint256 \_end)
 
-- **설명:** 보상 스케줄을 추가합니다. 풀의 상태가 `Operating`, `Closed`, `OperatingStopped` 중 하나일 때만 호출할 수 있습니다.
+- **설명:** 보상 스케줄을 추가합니다. 풀의 상태가 `Operating`, `OperatingClosed`, `OperatingStopped` 중 하나일 때만 호출할 수 있습니다.
 - **매개변수:**
 - `_tokenMultipliedPriceAtPayout (uint256)`: 보상 시 적용될 토큰 가격.
 - `_start (uint256)`: 보상 시작 시점(Unix time).
@@ -110,7 +110,7 @@
 
 #### startOperating()
 
-- **설명:** 운영을 시작합니다. 풀의 상태가 `Fundraising` 또는 `Locked`일 때만 호출할 수 있습니다.
+- **설명:** 운영을 시작합니다. 풀의 상태가 `Fundraising` 또는 `FundraisingLocked`일 때만 호출할 수 있습니다.
 - **매개변수:** 없음.
 - **이벤트 트리거:**
 - `OperatingStarted()`
@@ -171,7 +171,7 @@
 
 #### claimReward(uint256 \_stakeIndex)
 
-- **설명:** 스테이킹 별 보상을 청구합니다. 풀의 상태가 `Operating`, `Closed`, 또는 `OperatingStopped`일 때만 호출할 수 있습니다.
+- **설명:** 스테이킹 별 보상을 청구합니다. 풀의 상태가 `Operating`, `OperatingClosed`, 또는 `OperatingStopped`일 때만 호출할 수 있습니다.
 - **매개변수:**
 - `_stakeIndex (uint256)`: 스테이킹 인덱스.
 - **이벤트 트리거:**
@@ -179,7 +179,7 @@
 
 #### withdrawAllPrincipal()
 
-- **설명:** 원금을 회수합니다. 풀의 상태가 `FundraisingStopped`, `Failed`, `OperatingStopped`, 또는 `Closed`일 때만 호출할 수 있습니다.
+- **설명:** 원금을 회수합니다. 풀의 상태가 `FundraisingStopped`, `FundraisingFailed`, `OperatingStopped`, 또는 `OperatingClosed`일 때만 호출할 수 있습니다.
 - **매개변수:** 없음.
 - **이벤트 트리거:**
 - `PrincipalWithdrawn(address indexed user, uint256 totalAmount)`
