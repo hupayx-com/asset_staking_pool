@@ -16,6 +16,16 @@ const config: HardhatUserConfig = {
       },
     },
   },
+  networks: {
+    hardhat: {},
+    amoy: {
+      url: "https://rpc-amoy.polygon.technology",
+      accounts: ["YOUR PRIVATE KEY"],
+    },
+  },
+  etherscan: {
+    apiKey: "YOUR KEY",
+  },
 };
 
 export default config;
