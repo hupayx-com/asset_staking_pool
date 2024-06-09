@@ -217,7 +217,7 @@ contract StakingPool {
 
   /**
    * @notice 연이율 설정
-   * @param _interestMultipliedRate 연이율, ex) 0.5% 경우, 실제값은 0.5 x RATE_MULTIPLIER
+   * @param _interestMultipliedRate 연이율, ex) 0.05% 경우, 실제값은 0.0005 x RATE_MULTIPLIER
    */
   function setAnnualInterestRateMultiplier(
     uint256 _interestMultipliedRate
