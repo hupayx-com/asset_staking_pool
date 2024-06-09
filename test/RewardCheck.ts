@@ -388,4 +388,20 @@ describe("RewardCheck", function () {
     // 7 + 14
     expect(totalPendingRewards).to.be.equal(ethers.parseEther("21"));
   });
+
+  it("보상 스케줄 카운트 확인", async function () {
+    const { stakingPool, owner } = await deployStakingPoolFixture();
+
+    const start = Math.floor(Date.now() / 1000); // 현재 시간 (초 단위)
+    const end = start + 30 * 24 * 60 * 60; // 30일 후
+
+    await stakingPool.connect(owner).startFundraising();
+    await stakingPool.connect(owner).startOperating();
+
+    await stakingPool.addRewardSchedule(1500000, start, end);
+    await stakingPool.addRewardSchedule(1600000, end, end + 60 * 60 * 24); // +1 day
+
+    const rewardScheduleCount = await stakingPool.getRewardScheduleCount();
+    expect(rewardScheduleCount).to.equal(2);
+  });
 });

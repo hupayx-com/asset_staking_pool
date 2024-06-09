@@ -737,4 +737,12 @@ contract StakingPool {
 
     return userStakes[_user][_stakeIndex];
   }
+
+  /**
+   * @notice 보상 스케줄의 개수를 얻어온다.
+   * @return 보상 스케줄의 개수
+   */
+  function getRewardScheduleCount() external view returns (uint256) {
+    return rewardSchedules.length;
+  }
 }
