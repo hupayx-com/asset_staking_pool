@@ -45,9 +45,9 @@ describe("Staking", function () {
     suffle = (await suffleFactory.deploy()) as Suffle;
 
     await stakingPool.setStakingToken(suffle.getAddress());
-    await stakingPool.setAnnualInterestRateMultiplier(100); // 연 이율 1%
+    await stakingPool.setAnnualInterestRateMultiplier(1); // 연 이율 0.01% == 0.0001
     await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
-    await stakingPool.setMaxFundraisingPrice(10000);
+    await stakingPool.setMaxFundraisingPrice(100000000);
 
     // faucet for staking
     await suffle.transfer(
@@ -76,7 +76,7 @@ describe("Staking", function () {
     // staking 은 모금/운영 시에만 가능
     await stakingPool.connect(owner).startFundraising();
 
-    const STAKING_AMOUNT_ETHER = "365";
+    const STAKING_AMOUNT_ETHER = "3650000";
     await suffle
       .connect(staker_1)
       .approve(
@@ -97,7 +97,9 @@ describe("Staking", function () {
     expect(stakeRecord.claimedReward).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord.tokenMultipliedPrice).to.equal(1000000);
-    expect(stakeRecord.dailyInterestMultipliedPrice).to.equal(1000000n);
+    expect(stakeRecord.dailyInterestMultipliedPriceAndRate).to.equal(
+      10000000000n
+    );
   });
 
   it("최소 스테이킹 금액 이상 일때 스테이킹이 성공한다.", async function () {
@@ -216,8 +218,8 @@ describe("Staking", function () {
     // staking 은 모금/운영 시에만 가능
     await stakingPool.connect(owner).startFundraising();
 
-    const STAKING_AMOUNT_ETHER = "365";
-    const STAKING_AMOUNT_ETHER_2 = "730";
+    const STAKING_AMOUNT_ETHER = "3650000";
+    const STAKING_AMOUNT_ETHER_2 = "7300000";
 
     await suffle
       .connect(staker_1)
@@ -251,7 +253,9 @@ describe("Staking", function () {
     expect(stakeRecord_1.claimedReward).to.equal(0);
     expect(stakeRecord_1.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord_1.tokenMultipliedPrice).to.equal(1000000);
-    expect(stakeRecord_1.dailyInterestMultipliedPrice).to.equal(1000000n);
+    expect(stakeRecord_1.dailyInterestMultipliedPriceAndRate).to.equal(
+      10000000000n
+    );
 
     const stakeRecord_2 = await stakingPool.userStakes(
       await staker_2.getAddress(),
@@ -263,7 +267,9 @@ describe("Staking", function () {
     expect(stakeRecord_2.claimedReward).to.equal(0);
     expect(stakeRecord_2.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord_2.tokenMultipliedPrice).to.equal(5000000);
-    expect(stakeRecord_2.dailyInterestMultipliedPrice).to.equal(10000000n);
+    expect(stakeRecord_2.dailyInterestMultipliedPriceAndRate).to.equal(
+      100000000000n
+    );
   });
 
   it("1 명의 사용자가 토큰을 2 번 스테이킹 한다.", async function () {
@@ -273,8 +279,8 @@ describe("Staking", function () {
     // staking 은 모금/운영 시에만 가능
     await stakingPool.connect(owner).startFundraising();
 
-    const STAKING_AMOUNT_ETHER = "365";
-    const STAKING_AMOUNT_ETHER_2 = "730";
+    const STAKING_AMOUNT_ETHER = "3650000";
+    const STAKING_AMOUNT_ETHER_2 = "7300000";
 
     await suffle
       .connect(staker_1)
@@ -308,7 +314,9 @@ describe("Staking", function () {
     expect(stakeRecord_1.claimedReward).to.equal(0);
     expect(stakeRecord_1.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord_1.tokenMultipliedPrice).to.equal(1000000);
-    expect(stakeRecord_1.dailyInterestMultipliedPrice).to.equal(1000000n);
+    expect(stakeRecord_1.dailyInterestMultipliedPriceAndRate).to.equal(
+      10000000000n
+    );
 
     const stakeRecord_2 = await stakingPool.userStakes(
       await staker_1.getAddress(),
@@ -320,6 +328,8 @@ describe("Staking", function () {
     expect(stakeRecord_2.claimedReward).to.equal(0);
     expect(stakeRecord_2.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord_2.tokenMultipliedPrice).to.equal(5000000);
-    expect(stakeRecord_2.dailyInterestMultipliedPrice).to.equal(10000000n);
+    expect(stakeRecord_2.dailyInterestMultipliedPriceAndRate).to.equal(
+      100000000000n
+    );
   });
 });

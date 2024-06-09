@@ -47,9 +47,9 @@ describe("RewardCheck", function () {
     suffle = (await suffleFactory.deploy()) as Suffle;
 
     await stakingPool.setStakingToken(suffle.getAddress());
-    await stakingPool.setAnnualInterestRateMultiplier(100); // 연 이율 1%
+    await stakingPool.setAnnualInterestRateMultiplier(1); // 연 이율 0.01% == 0.0001
     await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
-    await stakingPool.setMaxFundraisingPrice(10000);
+    await stakingPool.setMaxFundraisingPrice(100000000);
 
     // faucet for staking
     await suffle.transfer(
@@ -77,7 +77,7 @@ describe("RewardCheck", function () {
 
     await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
 
-    const STAKING_AMOUNT_ETHER = "365";
+    const STAKING_AMOUNT_ETHER = "3650000";
 
     await suffle
       .connect(staker_1)
@@ -126,7 +126,7 @@ describe("RewardCheck", function () {
 
     await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
 
-    const STAKING_AMOUNT_ETHER = "365";
+    const STAKING_AMOUNT_ETHER = "3650000";
 
     await suffle
       .connect(staker_1)
@@ -175,7 +175,7 @@ describe("RewardCheck", function () {
 
     await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
 
-    const STAKING_AMOUNT_ETHER = "365";
+    const STAKING_AMOUNT_ETHER = "3650000";
 
     await suffle
       .connect(staker_1)
@@ -230,7 +230,7 @@ describe("RewardCheck", function () {
 
     await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
 
-    const STAKING_AMOUNT_ETHER = "365";
+    const STAKING_AMOUNT_ETHER = "3650000";
 
     await suffle
       .connect(staker_1)
@@ -285,7 +285,7 @@ describe("RewardCheck", function () {
 
     await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
 
-    const STAKING_AMOUNT_ETHER = "365";
+    const STAKING_AMOUNT_ETHER = "3650000";
 
     await suffle
       .connect(staker_1)
@@ -340,8 +340,8 @@ describe("RewardCheck", function () {
 
     await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
 
-    const STAKING_AMOUNT_ETHER_365 = "365";
-    const STAKING_AMOUNT_ETHER_730 = "730";
+    const STAKING_AMOUNT_ETHER_365 = "3650000";
+    const STAKING_AMOUNT_ETHER_730 = "7300000";
 
     await suffle
       .connect(staker_1)

@@ -47,9 +47,9 @@ describe("RewardClaim (한 명의 사용자)", function () {
     suffle = (await suffleFactory.deploy()) as Suffle;
 
     await stakingPool.setStakingToken(suffle.getAddress());
-    await stakingPool.setAnnualInterestRateMultiplier(100); // 연 이율 1%
+    await stakingPool.setAnnualInterestRateMultiplier(1); // 연 이율 0.01% == 0.0001
     await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
-    await stakingPool.setMaxFundraisingPrice(10000);
+    await stakingPool.setMaxFundraisingPrice(100000000);
 
     // faucet for staking
     await suffle.transfer(
@@ -77,7 +77,7 @@ describe("RewardClaim (한 명의 사용자)", function () {
 
     await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
 
-    const STAKING_AMOUNT_ETHER = "365";
+    const STAKING_AMOUNT_ETHER = "3650000";
 
     await suffle
       .connect(staker_1)
@@ -133,7 +133,7 @@ describe("RewardClaim (한 명의 사용자)", function () {
 
     await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
 
-    const STAKING_AMOUNT_ETHER = "365";
+    const STAKING_AMOUNT_ETHER = "3650000";
 
     await suffle
       .connect(staker_1)
@@ -195,7 +195,7 @@ describe("RewardClaim (한 명의 사용자)", function () {
 
     await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
 
-    const STAKING_AMOUNT_ETHER = "365";
+    const STAKING_AMOUNT_ETHER = "3650000";
 
     await suffle
       .connect(staker_1)
@@ -264,7 +264,7 @@ describe("RewardClaim (한 명의 사용자)", function () {
 
     await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
 
-    const STAKING_AMOUNT_ETHER = "365";
+    const STAKING_AMOUNT_ETHER = "3650000";
 
     await suffle
       .connect(staker_1)
@@ -326,7 +326,7 @@ describe("RewardClaim (한 명의 사용자)", function () {
 
     await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
 
-    const STAKING_AMOUNT_ETHER = "365";
+    const STAKING_AMOUNT_ETHER = "3650000";
 
     await suffle
       .connect(staker_1)
@@ -424,7 +424,7 @@ describe("RewardClaim (한 명의 사용자)", function () {
 
     await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
 
-    const STAKING_AMOUNT_ETHER = "365";
+    const STAKING_AMOUNT_ETHER = "3650000";
 
     let currentTime = await getCurrentBlockchainTime();
 
@@ -490,8 +490,8 @@ describe("RewardClaim (한 명의 사용자)", function () {
 
     await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
 
-    const STAKING_AMOUNT_1 = "365";
-    const STAKING_AMOUNT_2 = "730";
+    const STAKING_AMOUNT_1 = "3650000";
+    const STAKING_AMOUNT_2 = "7300000";
 
     await suffle
       .connect(staker_1)
@@ -534,8 +534,8 @@ describe("RewardClaim (한 명의 사용자)", function () {
       );
 
     // 사용자가 받은 보상
-    // 첫 번째 스테이킹(365): 20
-    // 두 번째 스테이킹(730): 40
+    // 첫 번째 스테이킹(3650000): 20
+    // 두 번째 스테이킹(7300000): 40
     expect(totalReceivedRewards).to.be.equal(ethers.parseEther("60"));
   });
 });

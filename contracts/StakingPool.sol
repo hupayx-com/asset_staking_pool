@@ -35,8 +35,8 @@ contract StakingPool {
 
   /// 소수점 계산을 위해 가격 x1,000,000 (ex. 2024년 4월 27일 SFL 가격: $0.002718)
   uint256 public constant PRICE_MULTIPLIER = 1e6;
-  /// 소수점 계산을 위해 이자율 x100 (ex. 이자율: 0.05 %)
-  uint256 public constant RATE_MULTIPLIER = 100;
+  /// 소수점 계산을 위해 이자율 x10,000 (ex. 이자율: 0.05% == 0.0005)
+  uint256 public constant RATE_MULTIPLIER = 10000;
 
   /// staking token 의 소수점 자리수에 따라 변경 가능
   uint256 public tokenDecimals = 1e18; /// default: wei
@@ -87,7 +87,7 @@ contract StakingPool {
     uint256 claimedReward; /// 받은 보상
     uint256 pendingRewardScheduleIndex; /// 보상 스케줄 목록에서 받을 보상들 중 첫 번째 index
     uint256 tokenMultipliedPrice; /// staking 시점의 토큰 가격
-    uint256 dailyInterestMultipliedPrice; /// 일 이자
+    uint256 dailyInterestMultipliedPriceAndRate; /// 일 이자
   }
   /// 동일 사용자의 스테이킹 이라도 개별 관리
   mapping(address => StakeRecord[]) public userStakes;
@@ -442,11 +442,10 @@ contract StakingPool {
 
     totalFundraisingMultipliedPrice = newTotalFundraisingMultipliedPrice;
 
-    uint256 dailyInterestMultipliedPrice = ((_amount *
+    uint256 dailyInterestMultipliedPriceAndRate = ((_amount *
       currentTokenMultipliedPrice) * details.annualInterestMultipliedRate) /
       365 /* 1 year */ /
-      tokenDecimals /
-      RATE_MULTIPLIER;
+      tokenDecimals;
 
     userStakes[msg.sender].push(
       StakeRecord({
@@ -455,7 +454,7 @@ contract StakingPool {
         claimedReward: 0,
         pendingRewardScheduleIndex: 0,
         tokenMultipliedPrice: currentTokenMultipliedPrice,
-        dailyInterestMultipliedPrice: dailyInterestMultipliedPrice
+        dailyInterestMultipliedPriceAndRate: dailyInterestMultipliedPriceAndRate
       })
     );
 
@@ -491,13 +490,13 @@ contract StakingPool {
     } else {
       record.amountStaked -= _amount;
 
-      uint256 dailyInterestMultipliedPrice = ((record.amountStaked *
+      uint256 dailyInterestMultipliedPriceAndRate = ((record.amountStaked *
         record.tokenMultipliedPrice) * details.annualInterestMultipliedRate) /
         365 /* 1 year */ /
-        tokenDecimals /
-        RATE_MULTIPLIER;
+        tokenDecimals;
 
-      record.dailyInterestMultipliedPrice = dailyInterestMultipliedPrice;
+      record
+        .dailyInterestMultipliedPriceAndRate = dailyInterestMultipliedPriceAndRate;
     }
 
     totalFundraisingMultipliedPrice -=
@@ -646,8 +645,11 @@ contract StakingPool {
       uint256 stakingDays = (schedule.end - effectiveStart) / 1 days;
 
       reward +=
-        (userStake.dailyInterestMultipliedPrice * stakingDays * tokenDecimals) /
-        schedule.tokenMultipliedPriceAtPayout;
+        (userStake.dailyInterestMultipliedPriceAndRate *
+          stakingDays *
+          tokenDecimals) /
+        schedule.tokenMultipliedPriceAtPayout /
+        RATE_MULTIPLIER;
 
       // 현재 시간이 보상 종료 시간을 넘었을 때 다음 보상 스케줄로 넘어갑니다.
       nextIndex += 1;

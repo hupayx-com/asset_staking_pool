@@ -47,9 +47,9 @@ describe("RewardClaim (다수의 사용자)", function () {
     suffle = (await suffleFactory.deploy()) as Suffle;
 
     await stakingPool.setStakingToken(suffle.getAddress());
-    await stakingPool.setAnnualInterestRateMultiplier(100); // 연 이율 1%
+    await stakingPool.setAnnualInterestRateMultiplier(1); // 연 이율 0.01% == 0.0001
     await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
-    await stakingPool.setMaxFundraisingPrice(10000);
+    await stakingPool.setMaxFundraisingPrice(100000000);
 
     // faucet for staking
     await suffle.transfer(
@@ -81,8 +81,8 @@ describe("RewardClaim (다수의 사용자)", function () {
 
     await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
 
-    const STAKING_AMOUNT_1 = "365";
-    const STAKING_AMOUNT_2 = "730";
+    const STAKING_AMOUNT_1 = "3650000";
+    const STAKING_AMOUNT_2 = "7300000";
 
     await suffle
       .connect(staker_1)
@@ -142,8 +142,8 @@ describe("RewardClaim (다수의 사용자)", function () {
 
     await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
 
-    const STAKING_AMOUNT_1 = "365";
-    const STAKING_AMOUNT_2 = "730";
+    const STAKING_AMOUNT_1 = "3650000";
+    const STAKING_AMOUNT_2 = "7300000";
 
     await suffle
       .connect(staker_1)
@@ -203,8 +203,8 @@ describe("RewardClaim (다수의 사용자)", function () {
 
     await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
 
-    const STAKING_AMOUNT_1 = "365";
-    const STAKING_AMOUNT_2 = "730";
+    const STAKING_AMOUNT_1 = "3650000";
+    const STAKING_AMOUNT_2 = "7300000";
 
     await suffle
       .connect(staker_1)

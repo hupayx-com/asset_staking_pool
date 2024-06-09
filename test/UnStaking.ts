@@ -44,9 +44,9 @@ describe("UnStaking", function () {
     suffle = (await suffleFactory.deploy()) as Suffle;
 
     await stakingPool.setStakingToken(suffle.getAddress());
-    await stakingPool.setAnnualInterestRateMultiplier(100); // 연 이율 1%
+    await stakingPool.setAnnualInterestRateMultiplier(1); // 연 이율 0.01% == 0.0001
     await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
-    await stakingPool.setMaxFundraisingPrice(10000);
+    await stakingPool.setMaxFundraisingPrice(100000000);
 
     // faucet for staking
     await suffle.transfer(
@@ -75,8 +75,8 @@ describe("UnStaking", function () {
     // staking 은 모금/운영 시에만 가능
     await stakingPool.connect(owner).startFundraising();
 
-    const STAKING_AMOUNT_ETHER_730 = "730";
-    const STAKING_AMOUNT_ETHER_365 = "365";
+    const STAKING_AMOUNT_ETHER_730 = "7300000";
+    const STAKING_AMOUNT_ETHER_365 = "3650000";
 
     await suffle
       .connect(staker_1)
@@ -108,7 +108,9 @@ describe("UnStaking", function () {
     expect(stakeRecord.claimedReward).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord.tokenMultipliedPrice).to.equal(1000000);
-    expect(stakeRecord.dailyInterestMultipliedPrice).to.equal(2000000n);
+    expect(stakeRecord.dailyInterestMultipliedPriceAndRate).to.equal(
+      20000000000n
+    );
 
     await stakingPool
       .connect(staker_1)
@@ -126,7 +128,9 @@ describe("UnStaking", function () {
     expect(stakeRecord.claimedReward).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord.tokenMultipliedPrice).to.equal(1000000);
-    expect(stakeRecord.dailyInterestMultipliedPrice).to.equal(1000000n);
+    expect(stakeRecord.dailyInterestMultipliedPriceAndRate).to.equal(
+      10000000000n
+    );
   });
 
   it("모금 기간에 일부 토큰을 언스테이킹 한다.", async function () {
@@ -136,8 +140,8 @@ describe("UnStaking", function () {
     // staking 은 모금/운영 시에만 가능
     await stakingPool.connect(owner).startFundraising();
 
-    const STAKING_AMOUNT_ETHER_730 = "730";
-    const STAKING_AMOUNT_ETHER_365 = "365";
+    const STAKING_AMOUNT_ETHER_730 = "7300000";
+    const STAKING_AMOUNT_ETHER_365 = "3650000";
 
     await suffle
       .connect(staker_1)
@@ -159,7 +163,9 @@ describe("UnStaking", function () {
     expect(stakeRecord.claimedReward).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord.tokenMultipliedPrice).to.equal(1000000);
-    expect(stakeRecord.dailyInterestMultipliedPrice).to.equal(2000000n);
+    expect(stakeRecord.dailyInterestMultipliedPriceAndRate).to.equal(
+      20000000000n
+    );
 
     await stakingPool.connect(owner).updateTokenMultipliedPrice(2000000);
 
@@ -179,7 +185,9 @@ describe("UnStaking", function () {
     expect(stakeRecord.claimedReward).to.equal(0);
     expect(stakeRecord.pendingRewardScheduleIndex).to.equal(0);
     expect(stakeRecord.tokenMultipliedPrice).to.equal(1000000);
-    expect(stakeRecord.dailyInterestMultipliedPrice).to.equal(1000000n);
+    expect(stakeRecord.dailyInterestMultipliedPriceAndRate).to.equal(
+      10000000000n
+    );
   });
 
   it("운영 기간내 토큰을 언스테이킹 하면 실패한다.", async function () {

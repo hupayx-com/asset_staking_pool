@@ -47,9 +47,9 @@ describe("WithdrawPrincipal (원금은 회수 시점 토큰 가격에 비례)", 
     suffle = (await suffleFactory.deploy()) as Suffle;
 
     await stakingPool.setStakingToken(await suffle.getAddress());
-    await stakingPool.setAnnualInterestRateMultiplier(100); // 연 이율 1%
+    await stakingPool.setAnnualInterestRateMultiplier(1); // 연 이율 0.01% == 0.0001
     await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
-    await stakingPool.setMaxFundraisingPrice(10000);
+    await stakingPool.setMaxFundraisingPrice(100000000);
 
     // faucet for staking
     await suffle.transfer(
@@ -82,7 +82,7 @@ describe("WithdrawPrincipal (원금은 회수 시점 토큰 가격에 비례)", 
     // staking 은 모금/운영 시에만 가능
     await stakingPool.connect(owner).startFundraising();
 
-    const STAKING_AMOUNT_ETHER = "365";
+    const STAKING_AMOUNT_ETHER = "3650000";
     await suffle
       .connect(staker_1)
       .approve(
@@ -114,7 +114,7 @@ describe("WithdrawPrincipal (원금은 회수 시점 토큰 가격에 비례)", 
     // staking 은 모금/운영 시에만 가능
     await stakingPool.connect(owner).startFundraising();
 
-    const STAKING_AMOUNT_ETHER = "365";
+    const STAKING_AMOUNT_ETHER = "3650000";
     await suffle
       .connect(staker_1)
       .approve(
@@ -146,7 +146,7 @@ describe("WithdrawPrincipal (원금은 회수 시점 토큰 가격에 비례)", 
     await stakingPool.connect(owner).startFundraising();
     await stakingPool.connect(owner).startOperating(); // Pool을 운영 상태로 전환
 
-    const STAKING_AMOUNT_ETHER = "365";
+    const STAKING_AMOUNT_ETHER = "3650000";
     await suffle
       .connect(staker_1)
       .approve(
@@ -207,7 +207,7 @@ describe("WithdrawPrincipal (원금은 회수 시점 토큰 가격에 비례)", 
     await stakingPool.connect(owner).startFundraising();
     await stakingPool.connect(owner).startOperating(); // Pool을 운영 상태로 전환
 
-    const STAKING_AMOUNT_ETHER = "365";
+    const STAKING_AMOUNT_ETHER = "3650000";
     await suffle
       .connect(staker_1)
       .approve(
@@ -268,7 +268,7 @@ describe("WithdrawPrincipal (원금은 회수 시점 토큰 가격에 비례)", 
     await stakingPool.connect(owner).startFundraising();
     await stakingPool.connect(owner).startOperating(); // Pool을 운영 상태로 전환
 
-    const STAKING_AMOUNT_ETHER = "365";
+    const STAKING_AMOUNT_ETHER = "3650000";
     await suffle
       .connect(staker_1)
       .approve(
@@ -312,7 +312,7 @@ describe("WithdrawPrincipal (원금은 회수 시점 토큰 가격에 비례)", 
 
     await stakingPool.connect(owner).startFundraising();
 
-    const STAKING_AMOUNT_ETHER = "365";
+    const STAKING_AMOUNT_ETHER = "3650000";
     await suffle
       .connect(staker_1)
       .approve(
