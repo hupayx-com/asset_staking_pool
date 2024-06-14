@@ -642,6 +642,12 @@ contract StakingPool {
         : schedule.start;
 
       // 스케줄의 시작 시점이 스케줄의 종료 시점보다 이전인 경우에만 보상을 계산
+      if (effectiveStart >= schedule.end) {
+        // effectiveStart가 schedule.end를 넘은 경우 해당 스케줄의 보상은 없음
+        continue;
+      }
+
+      // 스케줄의 시작 시점이 스케줄의 종료 시점보다 이전인 경우에만 보상을 계산
       uint256 stakingDays = (schedule.end - effectiveStart) / 1 days;
 
       reward +=

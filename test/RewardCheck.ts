@@ -404,4 +404,109 @@ describe("RewardCheck", function () {
     const rewardScheduleCount = await stakingPool.getRewardScheduleCount();
     expect(rewardScheduleCount).to.equal(2);
   });
+
+  it("보상 스케줄이 다 지난 후 스테이킹했을 때 보상이 없음을 확인", async function () {
+    const { stakingPool, suffle, staker_1, owner } =
+      await deployStakingPoolFixture();
+
+    // 보상은 staking pool 의 상태가 "운영" 이후 부터 가능하다.
+    await stakingPool.connect(owner).startFundraising();
+    await stakingPool.connect(owner).startOperating();
+
+    await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
+
+    const currentTime = await getCurrentBlockchainTime();
+
+    await stakingPool.addRewardSchedule(
+      2000000,
+      currentTime,
+      currentTime + SECONDS_IN_A_DAY * 10 // 10일 후 종료
+    );
+
+    // 시간을 보상 스케줄 종료 시점 + 1일로 설정
+    await ethers.provider.send("evm_increaseTime", [SECONDS_IN_A_DAY * 11]);
+    await ethers.provider.send("evm_mine");
+
+    const STAKING_AMOUNT_ETHER = "3650000";
+
+    await suffle
+      .connect(staker_1)
+      .approve(
+        stakingPool.getAddress(),
+        ethers.parseEther(STAKING_AMOUNT_ETHER)
+      );
+    await stakingPool
+      .connect(staker_1)
+      .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER));
+
+    // 스테이킹 직후 보상을 조회합니다.
+    const [rewards] = await stakingPool.calculatePendingRewardForStake(
+      await staker_1.getAddress(),
+      0
+    );
+
+    // 보상이 0이어야 함을 확인합니다.
+    expect(rewards).to.be.equal(ethers.parseEther("0"));
+  });
+
+  it("두 번째 보상 스케줄 기간 내 스테이킹 시, 두번째 보상 스케줄 기간이 지나면 첫 번째 보상은 제외되고 두 번째 보상만 조회", async function () {
+    const { stakingPool, suffle, staker_1, owner } =
+      await deployStakingPoolFixture();
+
+    // 보상은 staking pool의 상태가 "운영" 이후 부터 가능하다.
+    await stakingPool.connect(owner).startFundraising();
+    await stakingPool.connect(owner).startOperating();
+
+    await stakingPool.connect(owner).updateTokenMultipliedPrice(1000000);
+
+    const currentTime = await getCurrentBlockchainTime();
+
+    // 첫 번째 보상 스케줄 추가 (1일 후 시작, 10일 후 종료)
+    await stakingPool.addRewardSchedule(
+      1000000,
+      currentTime + SECONDS_IN_A_DAY * 1,
+      currentTime + SECONDS_IN_A_DAY * 10
+    );
+
+    // 두 번째 보상 스케줄 추가 (11일 후 시작, 20일 후 종료)
+    await stakingPool.addRewardSchedule(
+      1000000,
+      currentTime + SECONDS_IN_A_DAY * 10,
+      currentTime + SECONDS_IN_A_DAY * 20
+    );
+
+    // 두 번째 보상 스케줄 기간 내에 스테이킹 (12일 후)
+    await ethers.provider.send("evm_increaseTime", [SECONDS_IN_A_DAY * 12]);
+    await ethers.provider.send("evm_mine");
+
+    const STAKING_AMOUNT_ETHER = "3650000";
+
+    await suffle
+      .connect(staker_1)
+      .approve(
+        stakingPool.getAddress(),
+        ethers.parseEther(STAKING_AMOUNT_ETHER)
+      );
+    await stakingPool
+      .connect(staker_1)
+      .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER));
+
+    // 전체 보상 스케줄이 지난 시점
+    await ethers.provider.send("evm_increaseTime", [SECONDS_IN_A_DAY * 10]);
+    await ethers.provider.send("evm_mine");
+
+    // 보상을 조회합니다.
+    const [rewards] = await stakingPool.calculatePendingRewardForStake(
+      await staker_1.getAddress(),
+      0
+    );
+
+    // 첫 번째 보상은 제외되고 두 번째 보상 스케줄에 대한 보상만 조회되어야 합니다.
+    // 두 번째 보상 스케줄은 9일 동안 유효합니다.
+    // 보상의 예상치 계산
+    const expectedReward =
+      (ethers.parseEther(STAKING_AMOUNT_ETHER) * 3000000n * 9n * 1n) / 3650000n; // 연 이율 0.01%를 반영, 이 값은 examples에서 설정되어 있는 대로 조정
+
+    expect(rewards).to.be.equal(ethers.parseEther("7"));
+  });
 });
