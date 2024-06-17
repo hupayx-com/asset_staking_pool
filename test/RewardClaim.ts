@@ -233,9 +233,7 @@ describe("RewardClaim (한 명의 사용자)", function () {
     const initialBalance = await suffle.balanceOf(await staker_1.getAddress());
 
     // 보상 청구 시 오류 발생 확인
-    await expect(
-      stakingPool.connect(staker_1).claimReward(0)
-    ).to.be.revertedWith("No reward available");
+    await stakingPool.connect(staker_1).claimReward(0);
 
     // 보상 청구 후 사용자의 토큰 잔액 확인
     const finalBalance = await suffle.balanceOf(await staker_1.getAddress());

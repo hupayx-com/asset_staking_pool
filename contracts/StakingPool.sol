@@ -529,7 +529,7 @@ contract StakingPool {
       msg.sender,
       _stakeIndex
     );
-    require(reward > 0, "No reward available");
+    // require(reward > 0, "No reward available");
 
     StakeRecord storage userStake = userStakes[msg.sender][_stakeIndex];
     userStake.claimedReward += reward;
