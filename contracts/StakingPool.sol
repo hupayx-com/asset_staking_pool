@@ -672,7 +672,12 @@ contract StakingPool {
   function calculatePendingRewardForAllStakes(
     address _user
   ) public view returns (uint256) {
-    require(state == State.Operating, "Invalid state for viewing reward");
+    require(
+      state == State.Operating ||
+        state == State.OperatingClosed ||
+        state == State.OperatingStopped,
+      "Invalid state for viewing reward"
+    );
 
     // 보상 조회 로직
     uint256 totalReward = 0;
@@ -694,7 +699,12 @@ contract StakingPool {
   function calculateClaimedRewardForAllStakes(
     address _user
   ) public view returns (uint256) {
-    require(state == State.Operating, "Invalid state for viewing reward");
+    require(
+      state == State.Operating ||
+        state == State.OperatingClosed ||
+        state == State.OperatingStopped,
+      "Invalid state for viewing reward"
+    );
 
     /// 누적 보상 조회 로직
     uint256 totalReward = 0;
