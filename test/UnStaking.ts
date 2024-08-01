@@ -284,7 +284,9 @@ describe("UnStaking", function () {
     await stakingPool.connect(owner).startFundraising();
 
     const STAKING_AMOUNT_ETHER_1000 = "1000";
+    const UNSTAKING_AMOUNT_ETHER_1000 = "1000";
     const UNSTAKING_AMOUNT_ETHER_500 = "500";
+
     const TOKEN_PRICE_USD = 2000000;
 
     await stakingPool
@@ -310,11 +312,37 @@ describe("UnStaking", function () {
     // 언스테이킹
     await stakingPool
       .connect(staker_1)
-      .unStakeToken(0, ethers.parseEther(UNSTAKING_AMOUNT_ETHER_500));
+      .unStakeToken(0, ethers.parseEther(UNSTAKING_AMOUNT_ETHER_1000));
 
     // 총 모금액 확인
     totalFundraisingMultipliedPrice =
       await stakingPool.totalFundraisingMultipliedPrice();
-    expect(totalFundraisingMultipliedPrice).to.equal(500 * TOKEN_PRICE_USD); // 500 USD * 1,000,000
+    expect(totalFundraisingMultipliedPrice).to.equal(0 * TOKEN_PRICE_USD); // 500 USD * 1,000,000
+
+    // 스테이킹
+    await suffle
+      .connect(staker_1)
+      .approve(
+        stakingPool.getAddress(),
+        ethers.parseEther(STAKING_AMOUNT_ETHER_1000)
+      );
+    await stakingPool
+      .connect(staker_1)
+      .stakeToken(ethers.parseEther(STAKING_AMOUNT_ETHER_1000));
+
+    // 총 모금액 확인
+    totalFundraisingMultipliedPrice =
+      await stakingPool.totalFundraisingMultipliedPrice();
+    expect(totalFundraisingMultipliedPrice).to.equal(1000 * TOKEN_PRICE_USD); // 1,000 USD * 1,000,000
+
+    // 언스테이킹
+    await stakingPool
+      .connect(staker_1)
+      .unStakeToken(0, ethers.parseEther(UNSTAKING_AMOUNT_ETHER_1000));
+
+    // 총 모금액 확인
+    totalFundraisingMultipliedPrice =
+      await stakingPool.totalFundraisingMultipliedPrice();
+    expect(totalFundraisingMultipliedPrice).to.equal(0 * TOKEN_PRICE_USD); // 500 USD * 1,000,000
   });
 });

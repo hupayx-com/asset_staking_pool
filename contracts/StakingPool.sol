@@ -486,6 +486,13 @@ contract StakingPool {
 
     if (record.amountStaked == _amount) {
       records[_stakeIndex] = records[records.length - 1];
+
+      // 아래 pop 을 하기전 처리
+      // pop 이 수행된 후에는 정상 처리 되지 않음(데이터가 날아감...)
+      totalFundraisingMultipliedPrice -=
+        (_amount * record.tokenMultipliedPrice) /
+        tokenDecimals;
+
       records.pop();
     } else {
       record.amountStaked -= _amount;
@@ -497,11 +504,11 @@ contract StakingPool {
 
       record
         .dailyInterestMultipliedPriceAndRate = dailyInterestMultipliedPriceAndRate;
-    }
 
-    totalFundraisingMultipliedPrice -=
-      (_amount * record.tokenMultipliedPrice) /
-      tokenDecimals;
+      totalFundraisingMultipliedPrice -=
+        (_amount * record.tokenMultipliedPrice) /
+        tokenDecimals;
+    }
 
     IERC20(details.stakingToken).transfer(msg.sender, _amount);
 
